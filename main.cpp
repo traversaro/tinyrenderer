@@ -84,15 +84,15 @@ int main(int argc, char** argv) {
     {
         for (int h=0;h<height;h++)
         {
-            unsigned red = render_buffers.rgb[3*(w+h*width)+0];
+            unsigned red = render_buffers.rgb[3*(w+h*width)+2];
             unsigned green = render_buffers.rgb[3*(w+h*width)+1];
-            unsigned blue = render_buffers.rgb[3*(w+h*width)+2];
+            unsigned blue = render_buffers.rgb[3*(w+h*width)+0];
             TGAColor c(red,green,blue,255);
             img.set(w,h,c);
         }
     }
     
-    img.flip_vertically(); // to place the origin in the bottom left corner of the image
+    //img.flip_vertically(); // to place the origin in the bottom left corner of the image
     
     img.write_tga_file("framebuffer3.tga");
 

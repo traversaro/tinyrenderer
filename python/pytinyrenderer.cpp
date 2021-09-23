@@ -265,19 +265,19 @@ public:
         int graphicsShapeIndex = -1;
     
         int numVertices =
-            sizeof(textured_detailed_sphere_vertices) / strideInBytes;
-        int numIndices = sizeof(textured_detailed_sphere_indices) / sizeof(int);
+            sizeof(textured_sphere_vertices) / strideInBytes;
+        int numIndices = sizeof(textured_sphere_indices) / sizeof(int);
 
         //scale and transform
         std::vector<float> transformedVertices;
         {
-            int numVertices = sizeof(textured_detailed_sphere_vertices) / strideInBytes;
+            int numVertices = sizeof(textured_sphere_vertices) / strideInBytes;
             transformedVertices.resize(numVertices * 9);
             for(int i = 0; i < numVertices; i++)
             {
-                float trVert[3] = {textured_detailed_sphere_vertices[i * 9 + 0]*2 *radius,
-                    textured_detailed_sphere_vertices[i * 9 + 1]*2 *radius,
-                    textured_detailed_sphere_vertices[i * 9 + 2]*2 *radius};
+                float trVert[3] = {textured_sphere_vertices[i * 9 + 0]*2 *radius,
+                    textured_sphere_vertices[i * 9 + 1]*2 *radius,
+                    textured_sphere_vertices[i * 9 + 2]*2 *radius};
 
                 if(trVert[up_axis] > 0)
                     trVert[up_axis] += half_height;
@@ -287,12 +287,12 @@ public:
                 transformedVertices[i * 9 + 0] = trVert[0];
                 transformedVertices[i * 9 + 1] = trVert[1];
                 transformedVertices[i * 9 + 2] = trVert[2];
-                transformedVertices[i * 9 + 3] = textured_detailed_sphere_vertices[i * 9 + 3];
-                transformedVertices[i * 9 + 4] = textured_detailed_sphere_vertices[i * 9 + 4];
-                transformedVertices[i * 9 + 5] = textured_detailed_sphere_vertices[i * 9 + 5];
-                transformedVertices[i * 9 + 6] = textured_detailed_sphere_vertices[i * 9 + 6];
-                transformedVertices[i * 9 + 7] = textured_detailed_sphere_vertices[i * 9 + 7];
-                transformedVertices[i * 9 + 8] = textured_detailed_sphere_vertices[i * 9 + 8];
+                transformedVertices[i * 9 + 3] = textured_sphere_vertices[i * 9 + 3];
+                transformedVertices[i * 9 + 4] = textured_sphere_vertices[i * 9 + 4];
+                transformedVertices[i * 9 + 5] = textured_sphere_vertices[i * 9 + 5];
+                transformedVertices[i * 9 + 6] = textured_sphere_vertices[i * 9 + 6];
+                transformedVertices[i * 9 + 7] = textured_sphere_vertices[i * 9 + 7];
+                transformedVertices[i * 9 + 8] = textured_sphere_vertices[i * 9 + 8];
             }
         }
 
@@ -310,9 +310,9 @@ public:
 
         for (int i=0;i<numIndices;i+=3)
         {
-            model->addTriangle(textured_detailed_sphere_indices[i],textured_detailed_sphere_indices[i],textured_detailed_sphere_indices[i],
-                textured_detailed_sphere_indices[i+1],textured_detailed_sphere_indices[i+1],textured_detailed_sphere_indices[i+1],
-                textured_detailed_sphere_indices[i+2],textured_detailed_sphere_indices[i+2],textured_detailed_sphere_indices[i+2]);
+            model->addTriangle(textured_sphere_indices[i],textured_sphere_indices[i],textured_sphere_indices[i],
+                textured_sphere_indices[i+1],textured_sphere_indices[i+1],textured_sphere_indices[i+1],
+                textured_sphere_indices[i+2],textured_sphere_indices[i+2],textured_sphere_indices[i+2]);
         }
         m_models[uid] = model;
         return uid;
