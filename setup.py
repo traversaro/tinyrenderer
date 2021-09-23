@@ -92,8 +92,6 @@ CXX_FLAGS += '-D_USE_MATH_DEFINES '
 libraries = []
 include_dirs = ['.','python', 'third_party/pybind11/include']
 
-pytinyopengl3_libraries = []
-pytinyopengl3_include_dirs = ['src', 'third_party/tinyobjloader']
 
 try:
     import numpy
@@ -108,10 +106,14 @@ else:
         print("numpy_include_dirs = %s" % d)
     include_dirs += NP_DIRS
 
-sources = ["third_party/tinyxml2/tinyxml2.cpp"]
 
 pytinyrenderer_sources = ["python/pytinyrenderer.cpp",\
-"src/visualizer/opengl/tiny_camera.cpp",\
+  "geometry.cpp",
+  "model.cpp",
+  "our_gl.cpp",
+  "TinyRenderer.cpp",
+  "tgaimage.cpp",
+  
 ]
 
 
@@ -135,9 +137,7 @@ if _platform == "linux" or _platform == "linux2":
     CXX_FLAGS += '-Wno-unused-local-typedefs '
     CXX_FLAGS += '-Wno-unused-variable '
     CXX_FLAGS += '-Wno-unused-but-set-variable '
-    pytinyopengl3_libraries += ['dl','pthread']
-    pytinyopengl3_sources += ["src/visualizer/opengl/tiny_x11_opengl_window.cpp",\
-      "third_party/glad/glx.c"]
+    
 
 
 elif _platform == "win32":
@@ -147,10 +147,7 @@ elif _platform == "win32":
     CXX_FLAGS += '-DGLEW_STATIC '
     CXX_FLAGS += '/std:c++17 '
     
-    pytinyopengl3_libraries = ['Ws2_32', 'Winmm', 'User32', 'Opengl32', 'kernel32', 'glu32', 'Gdi32', 'Comdlg32']
- 
-    pytinyopengl3_sources += ["src/visualizer/opengl/tiny_win32_opengl_window.cpp",\
-    "src/visualizer/opengl/tiny_win32_window.cpp"]
+    
     
 elif _platform == "darwin":
     print("darwin!")
@@ -160,8 +157,7 @@ elif _platform == "darwin":
     CXX_FLAGS += '-D_DARWIN '
     CXX_FLAGS += '-mmacosx-version-min=10.15 '
     #    CXX_FLAGS += '-framework Cocoa '
-    pytinyopengl3_sources += ["src/visualizer/opengl/tiny_mac_opengl_window.cpp",\
-       "src/visualizer/opengl/tiny_mac_opengl_window_objc.m"]
+    
     
 else:
     print("bsd!")
@@ -181,11 +177,11 @@ CXX_FLAGS_TDS = CXX_FLAGS + '-DENABLE_TEST_ENVS ' + '-DNOMINMAX '
 
 pytinyrenderer_ext = Extension(
     "pytinyrenderer",
-    sources=sources+["python/pytinyrenderer.cpp"],
+    sources=pytinyrenderer_sources,
     libraries=libraries,
     extra_compile_args=CXX_FLAGS_TDS.split(),
     include_dirs=include_dirs + ["."])
-extensions.append(pytinydiffsim_ext)
+extensions.append(pytinyrenderer_ext)
 
 
 setup(
@@ -221,4 +217,5 @@ setup(
     ],
     package_dir={'': 'python'},
     packages=[x for x in find_packages('python')],
-    #package_data={'pytinydiffsim_data': need_files})
+    #package_data={'pytinydiffsim_data': need_files}
+    )
