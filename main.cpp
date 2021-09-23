@@ -92,8 +92,6 @@ int main(int argc, char** argv) {
         }
     }
     
-    img.flip_vertically(); // to place the origin in the bottom left corner of the image
-    
     img.write_tga_file("framebuffer3.tga");
 
     return 0;
