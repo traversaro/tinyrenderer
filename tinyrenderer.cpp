@@ -774,15 +774,18 @@ RenderBuffers TinySceneRenderer::get_camera_image_py(
     const std::vector<float>& viewMatrix,
     const std::vector<float>& projectionMatrix) {
   RenderBuffers buffers(width, height);
-  get_camera_image(width, height, objects, viewMatrix, projectionMatrix,
+  get_camera_image(objects, viewMatrix, projectionMatrix,
                    buffers);
   return buffers;
 }
 
 void TinySceneRenderer::get_camera_image(
-    int width, int height, const std::vector<int>& objects,
+    const std::vector<int>& objects,
     const std::vector<float>& viewMatrix,
     const std::vector<float>& projectionMatrix, RenderBuffers& buffers) {
+
+  int width = buffers.m_width;
+  int height = buffers.m_height;
   // clear the color buffer
   TGAColor clearColor;
   clearColor.bgra[0] = 255;

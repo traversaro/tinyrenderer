@@ -99,7 +99,7 @@ class TinySceneRenderer {
                                     const std::vector<float>& viewMatrix,
                                     const std::vector<float>& projectionMatrix);
 
-  void get_camera_image(int width, int height, const std::vector<int>& objects,
+  void get_camera_image(const std::vector<int>& objects,
                         const std::vector<float>& viewMatrix,
                         const std::vector<float>& projectionMatrix,
                         RenderBuffers& buffers);
