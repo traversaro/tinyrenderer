@@ -196,7 +196,7 @@ struct Shader : public IShader {
 };
 
 TinyRenderObjectInstance::TinyRenderObjectInstance()
-    : m_model(0), m_object_segmentation_uid(-1), m_doubleSided(false) {
+    : m_mesh_uid(-1), m_object_segmentation_uid(-1), m_doubleSided(false) {
   Vec3f eye(1, 1, 3);
   Vec3f center(0, 0, 0);
   Vec3f up(0, 0, 1);
@@ -210,6 +210,7 @@ TinyRenderObjectInstance::TinyRenderObjectInstance()
 }
 
 TinyRenderObjectInstance::~TinyRenderObjectInstance() {}
+
 
 static bool equals(const Vec4f& vA, const Vec4f& vB) { return false; }
 
@@ -291,7 +292,7 @@ void TinySceneRenderer::renderObject(int width, int height,
       Vec3f(object_instance.m_lightColor[0], object_instance.m_lightColor[1],
             object_instance.m_lightColor[2]);
   float light_distance = object_instance.m_lightDistance;
-  Model* model = object_instance.m_model;
+  Model* model = m_models[object_instance.m_mesh_uid];
   if (0 == model) return;
 
   // discard invisible objects (zero alpha)
@@ -495,7 +496,28 @@ std::vector<float> TinySceneRenderer::compute_projection_matrix(
 
 TinySceneRenderer::TinySceneRenderer() : m_guid(1) {}
 
-TinySceneRenderer::~TinySceneRenderer() {}
+TinySceneRenderer::~TinySceneRenderer() 
+{
+    //free all memory
+    {
+        auto it = m_object_instances.begin();
+        while (it != m_object_instances.end())
+        {
+            auto value = it->second;
+            delete value;
+        }
+        m_object_instances.clear();
+    }
+    {
+        auto it = m_models.begin();
+        while (it != m_models.end())
+        {
+            auto value = it->second;
+            delete value;
+        }
+        m_models.clear();
+    }
+}
 
 int TinySceneRenderer::create_mesh(const std::vector<double>& vertices,
                                    const std::vector<double>& normals,
@@ -688,7 +710,11 @@ void TinySceneRenderer::set_object_color(int instance_uid,
   auto object_instance = m_object_instances[instance_uid];
   if (object_instance) {
     if (color.size() == 4) {
-      object_instance->m_model->setColorRGBA(&color[0]);
+      Model* model = m_models[object_instance->m_mesh_uid];
+      if (model)
+      {
+        model->setColorRGBA(&color[0]);
+      }
     }
   }
 }
@@ -727,12 +753,13 @@ void TinySceneRenderer::set_object_local_scaling(
   }
 }
 
-int TinySceneRenderer::create_object_instance(int model_uid) {
-  TinyRender::Model* model = this->m_models[model_uid];
-  if (model == 0) return -1;
+int TinySceneRenderer::create_object_instance(int mesh_uid) {
+  TinyRender::Model* model = this->m_models[mesh_uid];
+  if (model == 0) 
+      return -1;
 
   TinyRenderObjectInstance* tinyObj = new TinyRenderObjectInstance();
-  tinyObj->m_model = model;
+  tinyObj->m_mesh_uid = mesh_uid;
   tinyObj->m_doubleSided = true;
 
   int uid = m_guid++;
@@ -798,5 +825,21 @@ void TinySceneRenderer::get_camera_image(
 
       renderObject(width, height, *object_instance, buffers);
     }
+  }
+}
+void TinySceneRenderer::delete_mesh(int mesh_uid) {
+    auto mesh_instance = m_models[mesh_uid];
+    if (mesh_instance)
+    {
+        m_models.erase(mesh_uid);
+        delete mesh_instance;
+    }
+}
+
+void TinySceneRenderer::delete_instance(int instance_uid) {
+  auto object_instance = m_object_instances[instance_uid];
+  if (object_instance) {
+      m_object_instances.erase(instance_uid);
+      delete object_instance;
   }
 }

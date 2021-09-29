@@ -70,7 +70,10 @@ PYBIND11_MODULE(pytinyrenderer, m) {
            &TinySceneRenderer::set_object_segmentation_uid)
       .def("get_object_segmentation_uid",
            &TinySceneRenderer::get_object_segmentation_uid)
-      .def("get_camera_image", &TinySceneRenderer::get_camera_image_py);
+      .def("get_camera_image", &TinySceneRenderer::get_camera_image_py)
+      .def("delete_mesh",  &TinySceneRenderer::delete_mesh)
+      .def("delete_instance",  &TinySceneRenderer::delete_instance)
+      ;
 
   m.def("compute_projection_matrix",
         &TinySceneRenderer::compute_projection_matrix);

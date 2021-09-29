@@ -10,7 +10,8 @@
 #include "tgaimage.h"
 
 struct TinyRenderObjectInstance {
-  TinyRender::Model* m_model;
+  
+  int m_mesh_uid;
 
   // Camera
   TinyRender::Matrix m_viewMatrix;
@@ -103,6 +104,15 @@ class TinySceneRenderer {
                         const std::vector<float>& projectionMatrix,
                         RenderBuffers& buffers);
 
+  
+  void delete_mesh(int mesh_uid);
+
+  void delete_instance(int instance_uid);
+
+  void renderObject(int width, int height,
+                           TinyRenderObjectInstance& object_instance,
+                           struct RenderBuffers& render_buffers);
+
   static std::vector<float> compute_view_matrix(
       const std::vector<float>& cameraPosition,
       const std::vector<float>& cameraTargetPosition,
@@ -112,10 +122,6 @@ class TinySceneRenderer {
                                                       float bottom, float top,
                                                       float nearVal,
                                                       float farVal);
-
-  static void renderObject(int width, int height,
-                           TinyRenderObjectInstance& object_instance,
-                           struct RenderBuffers& render_buffers);
 };
 
 #endif  // TDS_TINY_RENDERER_H
