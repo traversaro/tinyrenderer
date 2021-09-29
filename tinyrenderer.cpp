@@ -505,6 +505,7 @@ TinySceneRenderer::~TinySceneRenderer()
         {
             auto value = it->second;
             delete value;
+            it++;
         }
         m_object_instances.clear();
     }
@@ -514,6 +515,7 @@ TinySceneRenderer::~TinySceneRenderer()
         {
             auto value = it->second;
             delete value;
+            it++;
         }
         m_models.clear();
     }
