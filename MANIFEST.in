@@ -7,8 +7,8 @@ include .
 geometry.h
 model.h
 our_gl.h
-TinyRenderer.h
+tinyrenderer.h
 tgaimage.h
-TinyShapeData.h
-RenderBuffers.h
+tinyshapedata.h
+renderbuffers.h
   

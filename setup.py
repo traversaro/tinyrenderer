@@ -107,11 +107,11 @@ else:
     include_dirs += NP_DIRS
 
 
-pytinyrenderer_sources = ["python/pytinyrenderer.cpp",\
+pytinyrenderer_sources = ["python/pytinyrenderer.cc",\
   "geometry.cpp",
   "model.cpp",
   "our_gl.cpp",
-  "TinyRenderer.cpp",
+  "tinyrenderer.cpp",
   "tgaimage.cpp",
   
 ]

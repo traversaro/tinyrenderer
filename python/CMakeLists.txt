@@ -53,7 +53,7 @@ ENDIF(APPLE)
 ##################################################################
 
 SET(pytinyrenderer_SRCS
-	pytinyrenderer.cpp
+	pytinyrenderer.cc
 	../geometry.cpp
 	../geometry.h
 	../our_gl.cpp
@@ -62,8 +62,8 @@ SET(pytinyrenderer_SRCS
 	../model.h
 	../tgaimage.cpp
 	../tgaimage.h
-	../TinyRenderer.cpp
-	../TinyRenderer.h
+	../tinyrenderer.cpp
+	../tinyrenderer.h
 )
 
 ADD_LIBRARY(pytinyrenderer SHARED ${pytinyrenderer_SRCS} ${TDS_HDRS})

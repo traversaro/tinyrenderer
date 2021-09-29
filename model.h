@@ -56,14 +56,14 @@ public:
 	Vec3f vert(int iface, int nthvert);
 	Vec3f* readWriteVertices() 
 	{
-		if (verts_.size() == 0)
+		if (verts_.empty())
 			return 0;
 		return &verts_[0];
 	}
 
 	Vec3f* readWriteNormals()
 	{
-		if (norms_.size() == 0)
+		if (norms_.empty())
 			return 0;
 		return &norms_[0];
 	}
