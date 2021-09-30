@@ -9,6 +9,7 @@
 #include "our_gl.h"
 #include "tgaimage.h"
 #include "tinyshapedata.h"
+#include <array>
 
 using namespace TinyRender;
 
@@ -618,15 +619,21 @@ int TinySceneRenderer::create_capsule(float radius, float half_height,
   int numVertices = sizeof(textured_sphere_vertices) / strideInBytes;
   int numIndices = sizeof(textured_sphere_indices) / sizeof(int);
 
+  std::array<std::array<int,3>,3> index_order = {std::array<int,3>{1,0,2},std::array<int,3>{0,1,2},std::array<int,3>{0,2,1}};
+
+
+  std::array<int,3> shuffled = index_order[up_axis];
+  
+
   // scale and transform
   std::vector<float> transformedVertices;
   {
     int numVertices = sizeof(textured_sphere_vertices) / strideInBytes;
     transformedVertices.resize(numVertices * 9);
     for (int i = 0; i < numVertices; i++) {
-      float trVert[3] = {textured_sphere_vertices[i * 9 + 0] * 2 * radius,
-                         textured_sphere_vertices[i * 9 + 1] * 2 * radius,
-                         textured_sphere_vertices[i * 9 + 2] * 2 * radius};
+      float trVert[3] = {textured_sphere_vertices[i * 9 + shuffled[0]] * 2 * radius,
+                         textured_sphere_vertices[i * 9 + shuffled[1]] * 2 * radius,
+                         textured_sphere_vertices[i * 9 + shuffled[2]] * 2 * radius};
 
       if (trVert[up_axis] > 0)
         trVert[up_axis] += half_height;
