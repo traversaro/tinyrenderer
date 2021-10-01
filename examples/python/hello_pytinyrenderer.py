@@ -3,8 +3,13 @@ import math
 
 #only used for showing the image
 import numpy as np
-from numpngw import write_apng
+has_numpngw = False
 
+try:
+  from numpngw import write_apng
+  has_numpngw = True
+except:
+ pass
 
 scene = pytinyrenderer.TinySceneRenderer()
 
@@ -65,5 +70,5 @@ images.append(rgb_array)
 img = scene.get_camera_image(640,480,[capsulex_instance,capsuley_instance,capsulez_instance,cube_instance], view_matrix, projection_matrix)
 rgb_array = np.reshape(np.array(img.rgb,dtype=np.uint8), (img.height, img.width, -1))
 images.append(rgb_array)
-
-write_apng('tinyanim10_tds.png', images, delay=500)
+if has_numpngw:
+  write_apng('tinyanim10_tds.png', images, delay=500)
