@@ -92,7 +92,7 @@ class TinySceneRenderer {
   void set_object_local_scaling(int instance_uid,
                                 const std::vector<float>& local_scaling);
 
-  int create_object_instance(int model_uid);
+  int create_object_instance(int mesh_uid);
 
   RenderBuffers get_camera_image_py(int width, int height,
                                     const std::vector<int>& objects,
