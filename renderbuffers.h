@@ -10,7 +10,13 @@ struct RenderBuffers {
   std::vector<float> zbuffer;
   std::vector<int> segmentation_mask;
 
-  RenderBuffers(int width, int height) : m_width(width), m_height(height) {
+  RenderBuffers(int width, int height) {
+    resize(width, height);
+  }
+
+  void resize(int width, int height) {
+    m_width = width;
+    m_height = height;
     rgb.resize(width * height * 3);  // red-green-blue
     zbuffer.resize(width * height);
     segmentation_mask.resize(width * height);

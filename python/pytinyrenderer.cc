@@ -33,7 +33,7 @@ namespace py = pybind11;
 
 PYBIND11_MODULE(pytinyrenderer, m) {
   m.doc() = R"pbdoc(
-        python bindings for tiny renderer 
+        python bindings for tiny renderer
         -----------------------
 
         .. currentmodule:: pytinyrenderer
@@ -52,6 +52,32 @@ PYBIND11_MODULE(pytinyrenderer, m) {
       .def_readwrite("rgb", &RenderBuffers::rgb)
       .def_readwrite("depthbuffer", &RenderBuffers::zbuffer)
       .def_readwrite("segmentation_mask", &RenderBuffers::segmentation_mask);
+
+  py::class_<TinyRenderCamera>(m, "TinyRenderCamera")
+      .def(py::init<int, int, float, float, float, float,
+                    const std::vector<float>&, const std::vector<float>&,
+                    const std::vector<float>&>(),
+           py::arg("viewWidth") = 640, py::arg("viewHeight") = 480,
+           py::arg("near") = 0.01, py::arg("far") = 1000.0,
+           py::arg("hfov") = 58.0, py::arg("vfov") = 45.0,
+           py::arg("position") = std::vector<float>{1, 1, 1},
+           py::arg("target") = std::vector<float>{0, 0, 0},
+           py::arg("up") = std::vector<float>{0, 0, 1})
+      .def(py::init<int, int, const std::vector<float>&,
+                    const std::vector<float>&>(),
+           py::arg("viewWidth"), py::arg("viewHeight"),
+           py::arg("viewMatrix"),
+           py::arg("projectionMatrix"))
+      .def_readonly("view_width", &TinyRenderCamera::m_viewWidth)
+      .def_readonly("view_height", &TinyRenderCamera::m_viewHeight);
+
+  py::class_<TinyRenderLight>(m, "TinyRenderLight")
+      .def(py::init<const std::vector<float>&, const std::vector<float>&,
+                    float, float, float, float>(),
+           py::arg("direction") = std::vector<float>{0.57735, 0.57735, 0.57735},
+           py::arg("color") = std::vector<float>{1, 1, 1},
+           py::arg("distance") = 2.0, py::arg("ambient") = 0.6,
+           py::arg("diffuse") = 0.35, py::arg("specular") = 0.05);
 
   py::class_<TinySceneRenderer>(m, "TinySceneRenderer")
       .def(py::init<>())

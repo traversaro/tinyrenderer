@@ -9,26 +9,48 @@
 #include "renderbuffers.h"
 #include "tgaimage.h"
 
-struct TinyRenderObjectInstance {
-  
-  int m_mesh_uid;
-
-  // Camera
+struct TinyRenderCamera {
   TinyRender::Matrix m_viewMatrix;
   TinyRender::Matrix m_projectionMatrix;
   TinyRender::Matrix m_viewportMatrix;
-  TinyRender::Vec3f m_localScaling;
-  TinyRender::Vec3f m_lightDirWorld;
-  TinyRender::Vec3f m_lightColor;
-  float m_lightDistance;
-  float m_lightAmbientCoeff;
-  float m_lightDiffuseCoeff;
-  float m_lightSpecularCoeff;
+  int m_viewWidth;
+  int m_viewHeight;
 
+  TinyRenderCamera(int viewWidth = 640, int viewHeight = 480, float near = 0.01,
+                   float far = 1000, float hfov = 58, float vfov = 45,
+                   const std::vector<float>& position = {1, 1, 1},
+                   const std::vector<float>& target = {0, 0, 0},
+                   const std::vector<float>& up = {0, 0, 1});
+
+  TinyRenderCamera(int viewWidth, int viewHeight,
+                   const std::vector<float>& viewMatrix,
+                   const std::vector<float>& projectionMatrix);
+
+  virtual ~TinyRenderCamera();
+};
+
+struct TinyRenderLight {
+  TinyRender::Vec3f m_dirWorld;
+  TinyRender::Vec3f m_color;
+  float m_distance;
+  float m_ambientCoeff;
+  float m_diffuseCoeff;
+  float m_specularCoeff;
+
+  TinyRenderLight(
+    const std::vector<float>& direction = {0.57735, 0.57735, 0.57735},
+    const std::vector<float>& color = {1, 1, 1}, float distance = 2.0,
+    float ambient = 0.6, float diffuse = 0.35, float specular = 0.05);
+
+  virtual ~TinyRenderLight();
+};
+
+struct TinyRenderObjectInstance {
+  int m_mesh_uid;
+  TinyRender::Vec3f m_localScaling;
   TinyRender::Matrix m_modelMatrix;
   int m_object_segmentation_uid;
   bool m_doubleSided;
-
 
   TinyRenderObjectInstance();
   virtual ~TinyRenderObjectInstance();
@@ -94,34 +116,32 @@ class TinySceneRenderer {
 
   int create_object_instance(int mesh_uid);
 
-  RenderBuffers get_camera_image_py(int width, int height,
-                                    const std::vector<int>& objects,
-                                    const std::vector<float>& viewMatrix,
-                                    const std::vector<float>& projectionMatrix);
+  RenderBuffers get_camera_image_py(const std::vector<int>& objects,
+                                    const TinyRenderLight& light,
+                                    const TinyRenderCamera& camera);
 
   void get_camera_image(const std::vector<int>& objects,
-                        const std::vector<float>& viewMatrix,
-                        const std::vector<float>& projectionMatrix,
+                        const TinyRenderLight& light,
+                        const TinyRenderCamera& camera,
                         RenderBuffers& buffers);
 
-  
+
   void delete_mesh(int mesh_uid);
 
   void delete_instance(int instance_uid);
 
-  void renderObject(int width, int height,
-                           TinyRenderObjectInstance& object_instance,
-                           struct RenderBuffers& render_buffers);
+  void renderObject(const TinyRenderLight& light,
+                    const TinyRenderCamera& camera,
+                    const TinyRenderObjectInstance& object_instance,
+                    struct RenderBuffers& render_buffers);
 
   static std::vector<float> compute_view_matrix(
       const std::vector<float>& cameraPosition,
       const std::vector<float>& cameraTargetPosition,
       const std::vector<float>& cameraUp);
 
-  static std::vector<float> compute_projection_matrix(float left, float right,
-                                                      float bottom, float top,
-                                                      float nearVal,
-                                                      float farVal);
+  static std::vector<float> compute_projection_matrix(float hfov, float vfov,
+                                                      float near, float far);
 };
 
 #endif  // TDS_TINY_RENDERER_H

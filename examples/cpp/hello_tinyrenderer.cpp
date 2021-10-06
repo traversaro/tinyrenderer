@@ -14,7 +14,7 @@ using namespace TinyRender;
 int main(int argc, char** argv) {
 
     TinySceneRenderer scene;
-    std::vector<unsigned char> texture = {  255,0,0,//red, 
+    std::vector<unsigned char> texture = {  255,0,0,//red,
             0,255,0,//green
             0,0,255,//, blue
             255,255,255 //white
@@ -28,30 +28,27 @@ int main(int argc, char** argv) {
     std::vector<double> half_extents = {0.5,0.5,0.03};
     auto cube_model = scene.create_cube(half_extents, texture, texwidth, texheight, 16.);
 
-        
+
     double NEAR_PLANE = 0.01;
     double FAR_PLANE = 1000;
     double HFOV = 58.0;
     double VFOV = 45.0;
-    double left=-tan(M_PI*HFOV/360.0)*NEAR_PLANE;
-    double right=tan(M_PI*HFOV/360.0)*NEAR_PLANE;
-    double bottom=-tan(M_PI*VFOV/360.0)*NEAR_PLANE;
-    double top=tan(M_PI*VFOV/360.0)*NEAR_PLANE;
-    auto projection_matrix = TinySceneRenderer::compute_projection_matrix( left, right, bottom, top, NEAR_PLANE, FAR_PLANE);
-
-
-    std::vector<float> up = {0.,0.,1.};
-    std::vector<float> eye = {2.,4.,1.};
-    std::vector<float> target = {0.,0.,0.};
-    auto view_matrix = TinySceneRenderer::compute_view_matrix(eye, target, up);
+    int view_width = 256;
+    int view_height = 256;
+    std::vector<float> up = {0., 0., 1.};
+    std::vector<float> eye = {2., 4., 1.};
+    std::vector<float> target = {0., 0., 0.};
+    TinyRenderCamera camera(view_width, view_height, NEAR_PLANE, FAR_PLANE,
+                            HFOV, VFOV, eye, target, up);
+    TinyRenderLight light;
 
     int capsulex_instance = scene.create_object_instance(capsulex_model);
     int capsuley_instance = scene.create_object_instance(capsuley_model);
     int capsulez_instance = scene.create_object_instance(capsulez_model);
 
     std::vector<int> instances = {capsulex_instance};
-    RenderBuffers buffers(256,256);
-    scene.get_camera_image(instances, view_matrix, projection_matrix, buffers);
+    RenderBuffers buffers(view_width, view_height);
+    scene.get_camera_image(instances, light, camera, buffers);
 
     return 0;
 }
