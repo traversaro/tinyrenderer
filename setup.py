@@ -186,7 +186,7 @@ extensions.append(pytinyrenderer_ext)
 
 setup(
     name='pytinyrenderer',
-    version='0.0.3',
+    version='0.0.4',
     description=
     'Python bindings for Tiny Renderer',
     long_description=
