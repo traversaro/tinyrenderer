@@ -227,15 +227,17 @@ class mat {
     return ret;
   }
 
-  mat<DimRows, DimCols, T> invert_transpose() {
+  mat<DimRows, DimCols, T> invert_transpose() const {
     mat<DimRows, DimCols, T> ret = adjugate();
     T tmp = ret[0] * rows[0];
     return ret / tmp;
   }
 
-  mat<DimRows, DimCols, T> invert() { return invert_transpose().transpose(); }
+  mat<DimRows, DimCols, T> invert() const {
+    return invert_transpose().transpose();
+  }
 
-  mat<DimCols, DimRows, T> transpose() {
+  mat<DimCols, DimRows, T> transpose() const {
     mat<DimCols, DimRows, T> ret;
     for (size_t i = DimCols; i--; ret[i] = this->col(i))
       ;
