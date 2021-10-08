@@ -15,6 +15,7 @@
 
 using namespace TinyRender;
 
+
 struct DepthShader : public IShader {
   const Model* m_model;
   const Matrix& m_modelMat;
@@ -254,6 +255,7 @@ TinyRenderCamera::~TinyRenderCamera() {}
 
 TinyRenderLight::TinyRenderLight(const std::vector<float>& direction,
                                  const std::vector<float>& color,
+                                 const std::vector<float>& shadowmap_center,
                                  float distance, float ambient, float diffuse,
                                  float specular, bool has_shadow,
                                  float shadow_coefficient)
@@ -265,6 +267,7 @@ TinyRenderLight::TinyRenderLight(const std::vector<float>& direction,
       m_shadow_coefficient(shadow_coefficient) {
   m_dirWorld = Vec3f(direction[0], direction[1], direction[2]);
   m_color = Vec3f(color[0], color[1], color[2]);
+  m_shadowmap_center = Vec3f(0,0,0);
 }
 
 TinyRenderLight::~TinyRenderLight() {}
@@ -365,8 +368,9 @@ void TinySceneRenderer::renderObject(
   {
     // light target is set to be the origin, and the up direction is set to be
     // vertical up.
-    Matrix lightViewMatrix = lookat(light.m_dirWorld * light.m_distance,
-                                    Vec3f(0.0, 0.0, 0.0), Vec3f(0.0, 0.0, 1.0));
+    
+    Matrix lightViewMatrix = lookat(light.m_shadowmap_center+light.m_dirWorld * light.m_distance,
+                                    light.m_shadowmap_center, Vec3f(0.0, 0.0, 1.0));
     Matrix lightModelViewMatrix =
         lightViewMatrix * object_instance.m_modelMatrix;
     Matrix modelViewMatrix =
@@ -486,11 +490,11 @@ void TinySceneRenderer::renderObjectDepth(
   {
     // light target is set to be the origin, and the up direction is set to be
     // vertical up.
-    Vec3f center(0.0, 0.0, 0.0);
+    
     Vec3f up(0.0, 0.0, 1.0);
 
     Matrix lightViewMatrix =
-        lookat(light_dir_local * light_distance, center, up);
+        lookat(light.m_shadowmap_center+light_dir_local * light_distance, light.m_shadowmap_center, up);
     Matrix lightModelViewMatrix =
         lightViewMatrix * object_instance.m_modelMatrix;
     Matrix lightViewProjectionMatrix = camera.m_projectionMatrix;

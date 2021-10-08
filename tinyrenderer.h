@@ -32,6 +32,7 @@ struct TinyRenderCamera {
 struct TinyRenderLight {
   TinyRender::Vec3f m_dirWorld;
   TinyRender::Vec3f m_color;
+  TinyRender::Vec3f m_shadowmap_center;
   float m_distance;
   float m_ambientCoeff;
   float m_diffuseCoeff;
@@ -41,9 +42,10 @@ struct TinyRenderLight {
 
   TinyRenderLight(
       const std::vector<float>& direction = {0.57735, 0.57735, 0.57735},
-    const std::vector<float>& color = {1, 1, 1}, float distance = 10.0,
-    float ambient = 0.6, float diffuse = 0.35, float specular = 0.05, 
-      bool has_shadow = true, float shadow_coefficient=0.4);
+    const std::vector<float>& color = {1, 1, 1}, 
+    const std::vector<float>& shadowmap_center = {0,0,0},
+    float distance = 10.0, float ambient = 0.6, float diffuse = 0.35, 
+    float specular = 0.05, bool has_shadow = true, float shadow_coefficient=0.4);
     
 
   virtual ~TinyRenderLight();

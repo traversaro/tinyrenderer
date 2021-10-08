@@ -73,9 +73,10 @@ PYBIND11_MODULE(pytinyrenderer, m) {
 
   py::class_<TinyRenderLight>(m, "TinyRenderLight")
       .def(py::init<const std::vector<float>&, const std::vector<float>&,
-                    float, float, float, float, bool, float>(),
+          const std::vector<float>&, float, float, float, float, bool, float>(),
            py::arg("direction") = std::vector<float>{0.57735, 0.57735, 0.57735},
            py::arg("color") = std::vector<float>{1, 1, 1},
+           py::arg("shadowmap_center") = std::vector<float>{0, 0, 0},
            py::arg("distance") = 2.0, py::arg("ambient") = 0.6,
            py::arg("diffuse") = 0.35, py::arg("specular") = 0.05,
            py::arg("has_shadow") = true, py::arg("shadow_coefficient")= 0.4);
