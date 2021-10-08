@@ -10,6 +10,7 @@
 #include "tgaimage.h"
 #include "tinyshapedata.h"
 #include <array>
+#include <float.h>
 
 using namespace TinyRender;
 
