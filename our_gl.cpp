@@ -96,7 +96,11 @@ Vec3d barycentric(Vec2f A1, Vec2f B1, Vec2f C1, Vec2f P1) {
 
 void triangleClipped(mat<4, 3, float> &clipc, mat<4, 3, float> &orgClipc,
                      IShader &shader, RenderBuffers &render_buffers,
-                     const Matrix &viewPortMatrix, int objectUniqueId) {
+                     const Matrix &viewPortMatrix, int objectUniqueId,
+                    bool create_shadow_map ) {
+
+  std::vector<float>& zbuffer = create_shadow_map? render_buffers.shadow_buffer : render_buffers.zbuffer;
+
   mat<3, 4, float> screenSpacePts =
       (viewPortMatrix * clipc)
           .transpose();  // transposed to ease access to each of the points
@@ -133,7 +137,7 @@ void triangleClipped(mat<4, 3, float> &clipc, mat<4, 3, float> &orgClipc,
 
   for (P.x = bboxmin.x; P.x <= bboxmax.x; P.x++) {
     for (P.y = bboxmin.y; P.y <= bboxmax.y; P.y++) {
-      int y_inverted = (render_buffers.m_height - 1 - P.y);
+      int y_inverted = create_shadow_map ? P.y : (render_buffers.m_height - 1 - P.y);
       double frag_depth = 0;
       {
         Vec3d bc_screen = barycentric(pts2[0], pts2[1], pts2[2], P);
@@ -145,7 +149,7 @@ void triangleClipped(mat<4, 3, float> &clipc, mat<4, 3, float> &orgClipc,
         frag_depth = -1. * (clipd * bc_clip);
 
         if (bc_screen.x < 0 || bc_screen.y < 0 || bc_screen.z < 0 ||
-            render_buffers.zbuffer[P.x + y_inverted * render_buffers.m_width] >
+            zbuffer[P.x + y_inverted * render_buffers.m_width] >
                 frag_depth)
           continue;
       }
@@ -162,22 +166,30 @@ void triangleClipped(mat<4, 3, float> &clipc, mat<4, 3, float> &orgClipc,
       bool discard = shader.fragment(bc_clip2f, color);
 
       if (!discard) {
-        render_buffers.zbuffer[P.x + y_inverted * render_buffers.m_width] =
-            frag_depth;
-        if (!render_buffers.segmentation_mask.empty()) {
-          render_buffers
-              .segmentation_mask[P.x + y_inverted * render_buffers.m_width] =
-              objectUniqueId;
+            zbuffer[P.x + y_inverted * render_buffers.m_width] =
+                frag_depth;
+
+        if (!create_shadow_map)
+        {
+            if (!render_buffers.segmentation_mask.empty()) {
+              render_buffers
+                  .segmentation_mask[P.x + y_inverted * render_buffers.m_width] =
+                  objectUniqueId;
+            }
+            render_buffers
+                .rgb[3 * (P.x + y_inverted * render_buffers.m_width) + 0] =
+                color[0];
+            render_buffers
+                .rgb[3 * (P.x + y_inverted * render_buffers.m_width) + 1] =
+                color[1];
+            render_buffers
+                .rgb[3 * (P.x + y_inverted * render_buffers.m_width) + 2] =
+                color[2];
         }
-        render_buffers
-            .rgb[3 * (P.x + y_inverted * render_buffers.m_width) + 0] =
-            color[0];
-        render_buffers
-            .rgb[3 * (P.x + y_inverted * render_buffers.m_width) + 1] =
-            color[1];
-        render_buffers
-            .rgb[3 * (P.x + y_inverted * render_buffers.m_width) + 2] =
-            color[2];
+        else
+        {
+            render_buffers.shadow_uids[P.x + y_inverted * render_buffers.m_width] = objectUniqueId;
+        }
       }
     }
   }
@@ -185,7 +197,9 @@ void triangleClipped(mat<4, 3, float> &clipc, mat<4, 3, float> &orgClipc,
 
 void triangle(mat<4, 3, float> &clipc, IShader &shader,
               RenderBuffers &render_buffers, const Matrix &viewPortMatrix,
-              int objectUniqueId) {
+              int objectUniqueId, bool create_shadow_map) {
+
+  std::vector<float>& zbuffer = create_shadow_map? render_buffers.shadow_buffer : render_buffers.zbuffer;
   mat<3, 4, float> pts =
       (viewPortMatrix * clipc)
           .transpose();  // transposed to ease access to each of the points
@@ -210,7 +224,7 @@ void triangle(mat<4, 3, float> &clipc, IShader &shader,
   TGAColor color;
   for (P.x = bboxmin.x; P.x <= bboxmax.x; P.x++) {
     for (P.y = bboxmin.y; P.y <= bboxmax.y; P.y++) {
-      int y_inverted = (render_buffers.m_height - 1 - P.y);
+      int y_inverted = create_shadow_map ? P.y : (render_buffers.m_height - 1 - P.y);
 
       Vec3d bc_screen = barycentric(pts2[0], pts2[1], pts2[2], P);
       Vec3d bc_clip = Vec3d(bc_screen.x / pts[0][3], bc_screen.y / pts[1][3],
@@ -219,7 +233,7 @@ void triangle(mat<4, 3, float> &clipc, IShader &shader,
       Vec3d clipd(clipc[2].x, clipc[2].y, clipc[2].z);
       double frag_depth = -1. * (clipd * bc_clip);
       if (bc_screen.x < 0 || bc_screen.y < 0 || bc_screen.z < 0 ||
-          render_buffers.zbuffer[P.x + y_inverted * render_buffers.m_width] >
+          zbuffer[P.x + y_inverted * render_buffers.m_width] >
               frag_depth)
         continue;
       Vec3f bc_clipf(bc_clip.x, bc_clip.y, bc_clip.z);
@@ -228,23 +242,29 @@ void triangle(mat<4, 3, float> &clipc, IShader &shader,
       if (frag_depth > shader.m_nearPlane) discard = true;
 
       if (!discard) {
-        render_buffers.zbuffer[P.x + y_inverted * render_buffers.m_width] =
-            frag_depth;
-        if (!render_buffers.segmentation_mask.empty()) {
-          render_buffers
-              .segmentation_mask[P.x + y_inverted * render_buffers.m_width] =
-              objectUniqueId;
-        }
+        zbuffer[P.x + y_inverted * render_buffers.m_width] =
+                frag_depth;
+        if (!create_shadow_map)
+        {
+            if (!render_buffers.segmentation_mask.empty()) {
+              render_buffers
+                  .segmentation_mask[P.x + y_inverted * render_buffers.m_width] =
+                  objectUniqueId;
+            }
 
-        render_buffers
-            .rgb[3 * (P.x + y_inverted * render_buffers.m_width) + 0] =
-            color[0];
-        render_buffers
-            .rgb[3 * (P.x + y_inverted * render_buffers.m_width) + 1] =
-            color[1];
-        render_buffers
-            .rgb[3 * (P.x + y_inverted * render_buffers.m_width) + 2] =
-            color[2];
+            render_buffers
+                .rgb[3 * (P.x + y_inverted * render_buffers.m_width) + 0] =
+                color[0];
+            render_buffers
+                .rgb[3 * (P.x + y_inverted * render_buffers.m_width) + 1] =
+                color[1];
+            render_buffers
+                .rgb[3 * (P.x + y_inverted * render_buffers.m_width) + 2] =
+                color[2];
+        } else
+        {
+            render_buffers.shadow_uids[P.x + y_inverted * render_buffers.m_width] = objectUniqueId;
+        }
       }
     }
   }

@@ -23,7 +23,19 @@ struct vec {
     assert(i < DIM);
     return data_[i];
   }
-
+  vec<DIM, T> normalize() { 
+      T sum = 0;
+      for (int i=0;i<DIM;i++)
+      {
+          sum += data_[i]*data_[i];
+      }
+      T sq = std::sqrt(sum);
+      for (int i=0;i<DIM;i++)
+      {
+          data_[i] /= sq;
+      }
+      return *this; 
+  }
  private:
   T data_[DIM];
 };

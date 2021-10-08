@@ -73,11 +73,12 @@ PYBIND11_MODULE(pytinyrenderer, m) {
 
   py::class_<TinyRenderLight>(m, "TinyRenderLight")
       .def(py::init<const std::vector<float>&, const std::vector<float>&,
-                    float, float, float, float>(),
+                    float, float, float, float, bool, float>(),
            py::arg("direction") = std::vector<float>{0.57735, 0.57735, 0.57735},
            py::arg("color") = std::vector<float>{1, 1, 1},
            py::arg("distance") = 2.0, py::arg("ambient") = 0.6,
-           py::arg("diffuse") = 0.35, py::arg("specular") = 0.05);
+           py::arg("diffuse") = 0.35, py::arg("specular") = 0.05,
+           py::arg("has_shadow") = true, py::arg("shadow_coefficient")= 0.4);
 
   py::class_<TinySceneRenderer>(m, "TinySceneRenderer")
       .def(py::init<>())
@@ -103,7 +104,12 @@ PYBIND11_MODULE(pytinyrenderer, m) {
 
   m.def("compute_projection_matrix",
         &TinySceneRenderer::compute_projection_matrix);
+  m.def("compute_projection_matrix2",
+        &TinySceneRenderer::compute_projection_matrix2);
   m.def("compute_view_matrix", &TinySceneRenderer::compute_view_matrix);
+  m.def("compute_view_matrix_from_yaw_pitch_roll", &TinySceneRenderer::compute_view_matrix_from_yaw_pitch_roll);
+
+
 
 #ifdef VERSION_INFO
   m.attr("__version__") = VERSION_INFO;

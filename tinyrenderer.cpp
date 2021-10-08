@@ -14,13 +14,13 @@
 using namespace TinyRender;
 
 struct DepthShader : public IShader {
-  Model* m_model;
-  Matrix& m_modelMat;
+  const Model* m_model;
+  const Matrix& m_modelMat;
   Matrix m_invModelMat;
 
-  Matrix& m_projectionMat;
+  const Matrix& m_projectionMat;
   Vec3f m_localScaling;
-  Matrix& m_lightModelView;
+  const Matrix& m_lightModelView;
   float m_lightDistance;
 
   mat<2, 3, float> varying_uv;   // triangle uv coordinates, written by the
@@ -30,8 +30,8 @@ struct DepthShader : public IShader {
 
   mat<3, 3, float> varying_nrm;  // normal per vertex to be interpolated by FS
 
-  DepthShader(Model* model, Matrix& lightModelView, Matrix& projectionMat,
-              Matrix& modelMat, Vec3f localScaling, float lightDistance)
+  DepthShader(const Model* model, const Matrix& lightModelView, const Matrix& projectionMat,
+              const Matrix& modelMat, Vec3f localScaling, float lightDistance)
       : m_model(model),
         m_modelMat(modelMat),
         m_projectionMat(projectionMat),
@@ -83,12 +83,12 @@ struct Shader : public IShader {
   float m_diffuse_coefficient;
   float m_specular_coefficient;
 
-  std::vector<float>* m_shadowBuffer;
-
+  const std::vector<float>* m_shadowBuffer;
+  const std::vector<int>* m_shadowObjectUniqueIds;
+  int m_objectUniqueId;
   int m_width;
   int m_height;
-
-  int m_index;
+  float m_shadow_coefficient;
 
   mat<2, 3, float> varying_uv;   // triangle uv coordinates, written by the
                                  // vertex shader, read by the fragment shader
@@ -102,9 +102,11 @@ struct Shader : public IShader {
   Shader(Model* model, Vec3f light_dir_local, Vec3f light_color,
          Matrix& modelView, Matrix& lightModelView, const Matrix& projectionMat,
          const Matrix& modelMat, const Matrix& viewportMat, Vec3f localScaling,
-         const Vec4f& colorRGBA, int width, int height,
-         std::vector<float>* shadowBuffer, float ambient_coefficient = 0.6,
-         float diffuse_coefficient = 0.35, float specular_coefficient = 0.05)
+         const Vec4f& colorRGBA, int width, int height, 
+         const std::vector<float>* shadowBuffer,
+         const std::vector<int>* shadowObjectUniqueIds,
+         int objectUniqueId, float shadow_coefficient = 0.4, float ambient_coefficient = 0.6,
+         float diffuse_coefficient = 0.35, float specular_coefficient = 0.05 )
       : m_model(model),
         m_light_dir_local(light_dir_local),
         m_light_color(light_color),
@@ -118,10 +120,13 @@ struct Shader : public IShader {
         m_ambient_coefficient(ambient_coefficient),
         m_diffuse_coefficient(diffuse_coefficient),
         m_specular_coefficient(specular_coefficient),
-
+        m_shadowObjectUniqueIds(shadowObjectUniqueIds),
         m_shadowBuffer(shadowBuffer),
+        m_objectUniqueId(objectUniqueId),
+        m_shadow_coefficient(shadow_coefficient),
         m_width(width),
         m_height(height)
+        
 
   {
     m_nearPlane = m_projectionMat.col(3)[2] / (m_projectionMat.col(2)[2] - 1);
@@ -160,9 +165,14 @@ struct Shader : public IShader {
     int idx = int(index_x) +
               int(index_y) * m_width;  // index in the shadowbuffer array
     float shadow = 1.0;
-    if (m_shadowBuffer && idx >= 0 && idx < m_shadowBuffer->size()) {
-      shadow = 0.8 + 0.2 * (m_shadowBuffer->at(idx) <
-                            -depth + 0.05);  // magic coeff to avoid z-fighting
+    if (m_shadowBuffer && m_shadowObjectUniqueIds && idx >= 0 && 
+        idx < m_shadowBuffer->size() && idx < m_shadowObjectUniqueIds->size() ) {
+      float shadowVal = m_shadowBuffer->at(idx);
+      int shadowObjecUniqueId = m_shadowObjectUniqueIds->at(idx);
+      if (shadowObjecUniqueId != m_objectUniqueId && (shadowVal > (-depth + 0.05)))  // magic coeff to avoid z-fighting
+	    {
+		    shadow = m_shadow_coefficient;//darkness of shadow, smaller value is darker
+	    }
     }
     Vec3f bn = (varying_nrm * bar).normalize();
     Vec2f uv = varying_uv * bar;
@@ -242,9 +252,9 @@ TinyRenderCamera::~TinyRenderCamera() {}
 TinyRenderLight::TinyRenderLight(const std::vector<float>& direction,
                                  const std::vector<float>& color,
                                  float distance, float ambient, float diffuse,
-                                 float specular)
+                                 float specular, bool has_shadow, float shadow_coefficient)
     : m_distance(distance), m_ambientCoeff(ambient), m_diffuseCoeff(diffuse),
-      m_specularCoeff(specular) {
+      m_specularCoeff(specular), m_has_shadow(has_shadow), m_shadow_coefficient(shadow_coefficient) {
   m_dirWorld = Vec3f(direction[0], direction[1], direction[2]);
   m_color = Vec3f(color[0], color[1], color[2]);
 }
@@ -341,7 +351,9 @@ void TinySceneRenderer::renderObject(
   // discard invisible objects (zero alpha)
   if (model->getColorRGBA()[3] == 0) return;
 
-  std::vector<float>* shadowBufferPtr = 0;  // object_instance.m_shadowBuffer;
+  const std::vector<float>* shadowBufferPtr= (render_buffers.shadow_buffer.size()) ? &render_buffers.shadow_buffer : 0;
+  const std::vector<int>* shadowBufferObjectUniqueIdPtr = (render_buffers.shadow_uids.size()) ? &render_buffers.shadow_uids : 0;
+  
 
   {
     // light target is set to be the origin, and the up direction is set to be
@@ -365,6 +377,9 @@ void TinySceneRenderer::renderObject(
                   camera.m_viewportMatrix, localScaling,
                   model->getColorRGBA(), camera.m_viewWidth,
                   camera.m_viewHeight, shadowBufferPtr,
+                  shadowBufferObjectUniqueIdPtr,
+                  object_instance.m_object_segmentation_uid,
+                  light.m_shadow_coefficient,
                   light.m_ambientCoeff,
                   light.m_diffuseCoeff,
                   light.m_specularCoeff);
@@ -400,17 +415,128 @@ void TinySceneRenderer::renderObject(
           for (int t = 0; t < clippedTriangles.size(); t++) {
             triangleClipped(clippedTriangles[t], shader.varying_tri, shader,
                             render_buffers, camera.m_viewportMatrix,
-                            object_instance.m_object_segmentation_uid);
+                            object_instance.m_object_segmentation_uid, false);
           }
         } else {
           triangle(shader.varying_tri, shader, render_buffers,
                    camera.m_viewportMatrix,
-                   object_instance.m_object_segmentation_uid);
+                   object_instance.m_object_segmentation_uid, false);
         }
       }
     }
   }
-  }
+}
+
+
+#define _SQRT12 float(0.7071067811865475244008443621048490)
+
+template <class T>
+void planeSpace(const T& n, T& p, T& q)
+{
+	if (fabsf(n[2]) > _SQRT12)
+	{
+		// choose p in y-z plane
+		float a = n[1] * n[1] + n[2] * n[2];
+		float k = 1./sqrtf(a);
+		p[0] = 0;
+		p[1] = -n[2] * k;
+		p[2] = n[1] * k;
+		// set q = n x p
+		q[0] = a * k;
+		q[1] = -n[0] * p[2];
+		q[2] = n[0] * p[1];
+	}
+	else
+	{
+		// choose p in x-y plane
+		float a = n[0] * n[0] + n[1] * n[1];
+		float k = 1./sqrtf(a);
+		p[0] = -n[1] * k;
+		p[1] = n[0] * k;
+		p[2] = 0;
+		// set q = n x p
+		q[0] = -n[2] * p[1];
+		q[1] = n[2] * p[0];
+		q[2] = a * k;
+	}
+}
+
+
+void TinySceneRenderer::renderObjectDepth(
+  const TinyRenderLight& light,
+  const TinyRenderCamera& camera,
+  const TinyRenderObjectInstance& object_instance,
+  RenderBuffers& render_buffers) {
+
+	int width = render_buffers.m_width;
+	int height = render_buffers.m_height;
+    
+    
+
+	Vec3f light_dir_local = Vec3f(light.m_dirWorld[0], light.m_dirWorld[1], light.m_dirWorld[2]);
+	float light_distance = light.m_distance;
+	
+    Model* model = m_models[object_instance.m_mesh_uid];
+    if (0 == model) 
+        return;
+
+    // discard invisible objects (zero alpha)
+    if (model->getColorRGBA()[3] == 0) 
+        return;
+
+	float* shadowBufferPtr = (render_buffers.shadow_buffer.size()) ? &render_buffers.shadow_buffer.at(0) : 0;
+	int* segmentationMaskBufferPtr = 0;
+
+	TGAImage depthFrame(width, height, TGAImage::RGB);
+
+	{
+		// light target is set to be the origin, and the up direction is set to be vertical up.
+        Vec3f center(0.0, 0.0, 0.0);
+        Vec3f up(0.0, 0.0, 1.0);
+
+		Matrix lightViewMatrix = lookat(light_dir_local * light_distance, center, up);
+		Matrix lightModelViewMatrix = lightViewMatrix * object_instance.m_modelMatrix;
+		Matrix lightViewProjectionMatrix = camera.m_projectionMatrix;
+		Vec3f localScaling(object_instance.m_localScaling[0], object_instance.m_localScaling[1], object_instance.m_localScaling[2]);
+
+		DepthShader shader(model, lightModelViewMatrix, lightViewProjectionMatrix, object_instance.m_modelMatrix, localScaling, light_distance);
+		for (int i = 0; i < model->nfaces(); i++)
+		{
+			for (int j = 0; j < 3; j++)
+			{
+				shader.vertex(i, j);
+			}
+
+			mat<4, 3, float> stackTris[3];
+
+			std::vector<mat<4, 3, float> > clippedTriangles;
+			clippedTriangles.reserve(3);
+
+			bool hasClipped = clipTriangleAgainstNearplane(shader.varying_tri, clippedTriangles);
+
+            if (hasClipped) {
+              for (int t = 0; t < clippedTriangles.size(); t++) {
+                triangleClipped(clippedTriangles[t], shader.varying_tri, shader,
+                                render_buffers, camera.m_viewportMatrix,
+                                object_instance.m_object_segmentation_uid, true);
+              }
+            } else {
+              triangle(shader.varying_tri, shader, render_buffers,
+                       camera.m_viewportMatrix,
+                       object_instance.m_object_segmentation_uid, true);
+            }
+
+        }
+	}
+}
+
+
+
+
+
+
+
+
 
 std::vector<float> TinySceneRenderer::compute_view_matrix(
     const std::vector<float>& cameraPosition,
@@ -450,62 +576,214 @@ std::vector<float> TinySceneRenderer::compute_view_matrix(
   viewMatrix[3 * 4 + 3] = 1.f;
   return viewMatrix;
 }
-#if 0
-void b3ComputeViewMatrixFromYawPitchRoll(const float cameraTargetPosition[3], float distance, float yaw, float pitch, float roll, int upAxis, float viewMatrix[16])
-{
-	b3Vector3 camUpVector;
-	b3Vector3 camForward;
-	b3Vector3 camPos;
-	b3Vector3 camTargetPos = b3MakeVector3(cameraTargetPosition[0], cameraTargetPosition[1], cameraTargetPosition[2]);
-	b3Vector3 eyePos = b3MakeVector3(0, 0, 0);
 
-	b3Scalar yawRad = yaw * b3Scalar(0.01745329251994329547);      // rads per deg
-	b3Scalar pitchRad = pitch * b3Scalar(0.01745329251994329547);  // rads per deg
-	b3Scalar rollRad = roll * b3Scalar(0.01745329251994329547);      // rads per deg
-	b3Quaternion eyeRot;
+
+std::vector<float> TinySceneRenderer::compute_view_matrix_from_positions(const float cameraPosition[3], const float cameraTargetPosition[3], 
+	const float cameraUp[3])
+{
+    std::vector<float> viewMatrix;
+	viewMatrix.resize(16);
+	Vec3f eye = Vec3f(cameraPosition[0], cameraPosition[1], cameraPosition[2]);
+	Vec3f center = Vec3f(cameraTargetPosition[0], cameraTargetPosition[1], cameraTargetPosition[2]);
+	Vec3f up = Vec3f(cameraUp[0], cameraUp[1], cameraUp[2]);
+	Vec3f f = (center - eye).normalize();
+	Vec3f u = up.normalize();
+	Vec3f s = cross(f,u).normalize();
+	u = cross(s, f);
+
+	viewMatrix[0 * 4 + 0] = s.x;
+	viewMatrix[1 * 4 + 0] = s.y;
+	viewMatrix[2 * 4 + 0] = s.z;
+
+	viewMatrix[0 * 4 + 1] = u.x;
+	viewMatrix[1 * 4 + 1] = u.y;
+	viewMatrix[2 * 4 + 1] = u.z;
+
+	viewMatrix[0 * 4 + 2] = -f.x;
+	viewMatrix[1 * 4 + 2] = -f.y;
+	viewMatrix[2 * 4 + 2] = -f.z;
+
+	viewMatrix[0 * 4 + 3] = 0.f;
+	viewMatrix[1 * 4 + 3] = 0.f;
+	viewMatrix[2 * 4 + 3] = 0.f;
+
+	viewMatrix[3 * 4 + 0] = -dot(s,eye);
+	viewMatrix[3 * 4 + 1] = -dot(u, eye);
+	viewMatrix[3 * 4 + 2] = dot(f, eye);
+	viewMatrix[3 * 4 + 3] = 1.f;
+    return viewMatrix;
+}
+
+void TinySceneRenderer::setEulerZYX(	const float& yawZ, const float& pitchY, const float& rollX, Vec4f& euler)
+{
+	float halfYaw = float(yawZ) * float(0.5);
+	float halfPitch = float(pitchY) * float(0.5);
+	float halfRoll = float(rollX) * float(0.5);
+	float cosYaw = cosf(halfYaw);
+	float sinYaw = sinf(halfYaw);
+	float cosPitch = cos(halfPitch);
+	float sinPitch = sin(halfPitch);
+	float cosRoll = cos(halfRoll);
+	float sinRoll = sin(halfRoll);
+	euler[0] = sinRoll * cosPitch * cosYaw - cosRoll * sinPitch * sinYaw;
+	euler[1] = cosRoll * sinPitch * cosYaw + sinRoll * cosPitch * sinYaw;
+	euler[2] = cosRoll * cosPitch * sinYaw - sinRoll * sinPitch * cosYaw;
+	euler[3] = cosRoll * cosPitch * cosYaw + sinRoll * sinPitch * sinYaw;
+	euler.normalize();
+}
+
+Vec4f TinySceneRenderer::quatMul3(const Vec4f& q, const Vec3f& w)
+{
+	Vec4f mul;
+	mul[0] = q[3] * w[0] + q[1] * w[2] - q[2] * w[1];
+    mul[1] = q[3] * w[1] + q[2] * w[0] - q[0] * w[2];
+	mul[2] = q[3] * w[2] + q[0] * w[1] - q[1] * w[0];
+	mul[3] =-q[0] * w[0] - q[1] * w[1] - q[2] * w[2];
+	return mul;
+}
+
+Vec4f TinySceneRenderer::quatMul4(const Vec4f& q, const Vec4f& w)
+{
+	Vec4f mul;
+	mul[0] = q[3] * w[0] + q[0] * w[3] + q[1] * w[2] - q[2] * w[1];
+    mul[1] = q[3] * w[1] + q[1] * w[3] + q[2] * w[0] - q[0] * w[2];
+	mul[2] = q[3] * w[2] + q[2] * w[3] + q[0] * w[1] - q[1] * w[0];
+	mul[3] = q[3] * w[3] - q[0] * w[0] - q[1] * w[1] - q[2] * w[2];
+	return mul;
+}
+
+Vec4f TinySceneRenderer::inverse(const Vec4f& rotation)
+{
+	Vec4f inv;
+	inv[0] = -rotation[0];
+	inv[1] = -rotation[1];
+	inv[2] = -rotation[2];
+	inv[3] = rotation[3];
+	return inv;
+}
+
+Vec3f TinySceneRenderer::quatRotate(const Vec4f& rotation, const Vec3f& v)
+{
+	Vec4f q = quatMul3( rotation ,v);
+	Vec4f inv = inverse(rotation);
+	q = quatMul4(q, inv);
+	return Vec3f(q[0], q[1], q[2]);
+
+}
+
+std::vector<float>  TinySceneRenderer::compute_view_matrix_from_yaw_pitch_roll(const float cameraTargetPosition[3], float distance, 
+	float yaw, float pitch, float roll, int upAxis)
+{
+	Vec3f camUpVector;
+	Vec3f camForward;
+	Vec3f camPos;
+	Vec3f camTargetPos = Vec3f(cameraTargetPosition[0], cameraTargetPosition[1], cameraTargetPosition[2]);
+	Vec3f eyePos = Vec3f(0, 0, 0);
+
+	float yawRad = yaw * float(0.01745329251994329547);      // rads per deg
+	float pitchRad = pitch * float(0.01745329251994329547);  // rads per deg
+	float rollRad = roll * float(0.01745329251994329547);      // rads per deg
+	Vec4f eyeRot;
 
 	int forwardAxis(-1);
 	switch (upAxis)
 	{
 		case 1:
 			forwardAxis = 2;
-			camUpVector = b3MakeVector3(0, 1, 0);
-			eyeRot.setEulerZYX(rollRad, yawRad, -pitchRad);
+			camUpVector = Vec3f(0, 1, 0);
+			setEulerZYX(rollRad, yawRad, -pitchRad, eyeRot);
 			break;
 		case 2:
+        default:
 			forwardAxis = 1;
-			camUpVector = b3MakeVector3(0, 0, 1);
-			eyeRot.setEulerZYX(yawRad, rollRad, pitchRad);
+			camUpVector = Vec3f(0, 0, 1);
+			setEulerZYX( yawRad, rollRad, pitchRad, eyeRot);
 			break;
-		default:
-			return;
 	};
 
 	eyePos[forwardAxis] = -distance;
 
-	camForward = b3MakeVector3(eyePos[0], eyePos[1], eyePos[2]);
-	if (camForward.length2() < B3_EPSILON)
+	camForward = Vec3f(eyePos[0], eyePos[1], eyePos[2]);
+	float len2 = dot(camForward,camForward);
+	if (len2 < FLT_EPSILON)
 	{
-		camForward.setValue(1.f, 0.f, 0.f);
+		camForward = Vec3f(1.f, 0.f, 0.f);
 	}
 	else
 	{
 		camForward.normalize();
 	}
 
-	eyePos = b3Matrix3x3(eyeRot) * eyePos;
-	camUpVector = b3Matrix3x3(eyeRot) * camUpVector;
+	eyePos = quatRotate(eyeRot, eyePos);
+	camUpVector = quatRotate(eyeRot,camUpVector);
 
 	camPos = eyePos;
-	camPos += camTargetPos;
+	camPos = camPos+camTargetPos;
 
 	float camPosf[4] = {camPos[0], camPos[1], camPos[2], 0};
 	float camPosTargetf[4] = {camTargetPos[0], camTargetPos[1], camTargetPos[2], 0};
 	float camUpf[4] = {camUpVector[0], camUpVector[1], camUpVector[2], 0};
 
-	b3ComputeViewMatrixFromPositions(camPosf, camPosTargetf, camUpf, viewMatrix);
+	return compute_view_matrix_from_positions(camPosf, camPosTargetf, camUpf);
 }
-#endif
+
+std::vector<float> TinySceneRenderer::compute_projection_matrix2(float left, float right, float bottom, float top, float nearVal, float farVal)
+{
+    std::vector<float> projectionMatrix;
+	projectionMatrix.resize(16);
+	projectionMatrix[0 * 4 + 0] = (float(2) * nearVal) / (right - left);
+	projectionMatrix[0 * 4 + 1] = float(0);
+	projectionMatrix[0 * 4 + 2] = float(0);
+	projectionMatrix[0 * 4 + 3] = float(0);
+
+	projectionMatrix[1 * 4 + 0] = float(0);
+	projectionMatrix[1 * 4 + 1] = (float(2) * nearVal) / (top - bottom);
+	projectionMatrix[1 * 4 + 2] = float(0);
+	projectionMatrix[1 * 4 + 3] = float(0);
+
+	projectionMatrix[2 * 4 + 0] = (right + left) / (right - left);
+	projectionMatrix[2 * 4 + 1] = (top + bottom) / (top - bottom);
+	projectionMatrix[2 * 4 + 2] = -(farVal + nearVal) / (farVal - nearVal);
+	projectionMatrix[2 * 4 + 3] = float(-1);
+
+	projectionMatrix[3 * 4 + 0] = float(0);
+	projectionMatrix[3 * 4 + 1] = float(0);
+	projectionMatrix[3 * 4 + 2] = -(float(2) * farVal * nearVal) / (farVal - nearVal);
+	projectionMatrix[3 * 4 + 3] = float(0);
+    return projectionMatrix;
+}
+
+
+
+std::vector<float> TinySceneRenderer::compute_projection_matrix_fov(float fov, float aspect, float nearVal, float farVal)
+{
+    std::vector<float> projectionMatrix;
+    projectionMatrix.resize(16);
+	float yScale = 1.0 / tan((M_PI / 180.0) * fov / 2);
+	float xScale = yScale / aspect;
+
+	projectionMatrix[0 * 4 + 0] = xScale;
+	projectionMatrix[0 * 4 + 1] = float(0);
+	projectionMatrix[0 * 4 + 2] = float(0);
+	projectionMatrix[0 * 4 + 3] = float(0);
+
+	projectionMatrix[1 * 4 + 0] = float(0);
+	projectionMatrix[1 * 4 + 1] = yScale;
+	projectionMatrix[1 * 4 + 2] = float(0);
+	projectionMatrix[1 * 4 + 3] = float(0);
+
+	projectionMatrix[2 * 4 + 0] = 0;
+	projectionMatrix[2 * 4 + 1] = 0;
+	projectionMatrix[2 * 4 + 2] = (nearVal + farVal) / (nearVal - farVal);
+	projectionMatrix[2 * 4 + 3] = float(-1);
+
+	projectionMatrix[3 * 4 + 0] = float(0);
+	projectionMatrix[3 * 4 + 1] = float(0);
+	projectionMatrix[3 * 4 + 2] = (float(2) * farVal * nearVal) / (nearVal - farVal);
+	projectionMatrix[3 * 4 + 3] = float(0);
+    return projectionMatrix;
+}
+
 
 std::vector<float> TinySceneRenderer::compute_projection_matrix(
     float hfov, float vfov, float near, float far) {
@@ -817,6 +1095,7 @@ int TinySceneRenderer::create_object_instance(int mesh_uid) {
   tinyObj->m_doubleSided = true;
 
   int uid = m_guid++;
+  tinyObj->m_object_segmentation_uid = uid;
   m_object_instances[uid] = tinyObj;
   return uid;
 }
@@ -840,25 +1119,24 @@ void TinySceneRenderer::get_camera_image(
   int height = camera.m_viewHeight;
   buffers.resize(width, height);
 
-  // clear the color buffer
-  TGAColor clearColor;
-  clearColor.bgra[0] = 255;
-  clearColor.bgra[1] = 255;
-  clearColor.bgra[2] = 255;
-  clearColor.bgra[3] = 255;
-
+  
   float farPlane = camera.m_projectionMatrix[3][2] / (
     camera.m_projectionMatrix[2][2] + 1);
 
-  for (int x = 0; x < width; x++) {
-    for (int y = 0; y < height; y++) {
-      buffers.rgb[3 * (x + y * width) + 0] = clearColor[0];
-      buffers.rgb[3 * (x + y * width) + 1] = clearColor[1];
-      buffers.rgb[3 * (x + y * width) + 2] = clearColor[2];
-      buffers.zbuffer[x + y * width] = -farPlane;
-    }
-  }
+  buffers.clear(farPlane);
 
+
+  if (light.m_has_shadow)
+  {
+      for (int i = 0; i < objects.size(); i++) {
+        int uid = objects[i];
+        auto object_instance = m_object_instances[uid];
+        if (object_instance) {
+          renderObjectDepth(light, camera, *object_instance, buffers);
+        }
+      }
+  }
+  
   for (int i = 0; i < objects.size(); i++) {
     int uid = objects[i];
     auto object_instance = m_object_instances[uid];

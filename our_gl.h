@@ -20,11 +20,12 @@ struct IShader {
 
 void triangle(mat<4, 3, float> &clipc, IShader &shader,
               RenderBuffers &render_buffers, const Matrix &viewPortMatrix,
-              int objectUniqueId);
+              int objectUniqueId, bool create_shadow_map);
 
 void triangleClipped(mat<4, 3, float> &clipc, mat<4, 3, float> &orgClipc,
                      IShader &shader, RenderBuffers &render_buffers,
-                     const Matrix &viewPortMatrix, int objectUniqueId);
+                     const Matrix &viewPortMatrix, int objectUniqueId,
+                     bool create_shadow_map);
 }  // namespace TinyRender
 
 #endif  //__OUR_GL_H__

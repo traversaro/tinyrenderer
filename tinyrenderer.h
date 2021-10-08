@@ -36,11 +36,15 @@ struct TinyRenderLight {
   float m_ambientCoeff;
   float m_diffuseCoeff;
   float m_specularCoeff;
+  bool m_has_shadow;
+  float m_shadow_coefficient;
 
   TinyRenderLight(
-    const std::vector<float>& direction = {0.57735, 0.57735, 0.57735},
-    const std::vector<float>& color = {1, 1, 1}, float distance = 2.0,
-    float ambient = 0.6, float diffuse = 0.35, float specular = 0.05);
+      const std::vector<float>& direction = {0.57735, 0.57735, 0.57735},
+    const std::vector<float>& color = {1, 1, 1}, float distance = 10.0,
+    float ambient = 0.6, float diffuse = 0.35, float specular = 0.05, 
+      bool has_shadow = true, float shadow_coefficient=0.4);
+    
 
   virtual ~TinyRenderLight();
 };
@@ -135,13 +139,35 @@ class TinySceneRenderer {
                     const TinyRenderObjectInstance& object_instance,
                     struct RenderBuffers& render_buffers);
 
+  void renderObjectDepth(  const TinyRenderLight& light,
+                           const TinyRenderCamera& camera,
+                           const TinyRenderObjectInstance& object_instance,
+                           struct RenderBuffers& render_buffers);
+
   static std::vector<float> compute_view_matrix(
       const std::vector<float>& cameraPosition,
       const std::vector<float>& cameraTargetPosition,
       const std::vector<float>& cameraUp);
 
+  static std::vector<float>  compute_view_matrix_from_yaw_pitch_roll(const float cameraTargetPosition[3], float distance, 
+	float yaw, float pitch, float roll, int upAxis);
+
+  static std::vector<float> compute_view_matrix_from_positions(const float cameraPosition[3], const float cameraTargetPosition[3], 
+	const float cameraUp[3]);
+
+
   static std::vector<float> compute_projection_matrix(float hfov, float vfov,
                                                       float near, float far);
+  
+  static std::vector<float> compute_projection_matrix2(float left, float right, float bottom, float top, float nearVal, float farVal);
+  static std::vector<float> compute_projection_matrix_fov(float fov, float aspect, float nearVal, float farVal);
+
+  static TinyRender::Vec3f quatRotate(const TinyRender::Vec4f& rotation, const TinyRender::Vec3f& v);
+  static TinyRender::Vec4f inverse(const TinyRender::Vec4f& rotation);
+  static void setEulerZYX(	const float& yawZ, const float& pitchY, const float& rollX, TinyRender::Vec4f& euler);
+  static TinyRender::Vec4f quatMul3(const TinyRender::Vec4f& q, const TinyRender::Vec3f& w);
+  static TinyRender::Vec4f quatMul4(const TinyRender::Vec4f& q, const TinyRender::Vec4f& w);
+
 };
 
 #endif  // TDS_TINY_RENDERER_H

@@ -16,7 +16,7 @@ scene = pytinyrenderer.TinySceneRenderer()
 class TextureRGB888:
   def __init__(self):
     self.pixels = [
-            255,0,0,#red, green, blue
+            255,255,255,#red, green, blue
             0,255,0,
             0,0,255,
             255,255,255]
@@ -30,7 +30,7 @@ capx_model = scene.create_capsule(0.1,0.4,0, texture.pixels, texture.width, text
 capy_model = scene.create_capsule(0.1,0.4,1, texture.pixels, texture.width, texture.height)
 capz_model = scene.create_capsule(0.1,0.4,2, texture.pixels, texture.width, texture.height)
 
-cube_model = scene.create_cube([0.5,0.5,0.03], texture.pixels, texture.width, texture.height, 16.)
+cube_model = scene.create_cube([3,3,0.03], texture.pixels, 1,1, 16.)
 cube_instance = scene.create_object_instance(cube_model)
 scene.set_object_position(cube_instance, [0,0,-0.5])
 
@@ -49,15 +49,15 @@ capsulez_instance = scene.create_object_instance(capz_model)
 
 images=[]
 
-img = scene.get_camera_image([capsulex_instance], light, camera)
+img = scene.get_camera_image([cube_instance,capsulex_instance], light, camera)
 rgb_array = np.reshape(np.array(img.rgb,dtype=np.uint8), (img.height, img.width, -1))
 images.append(rgb_array)
 
-img = scene.get_camera_image([capsuley_instance], light, camera)
+img = scene.get_camera_image([cube_instance,capsuley_instance], light, camera)
 rgb_array = np.reshape(np.array(img.rgb,dtype=np.uint8), (img.height, img.width, -1))
 images.append(rgb_array)
 
-img = scene.get_camera_image([capsulez_instance], light, camera)
+img = scene.get_camera_image([cube_instance,capsulez_instance], light, camera)
 rgb_array = np.reshape(np.array(img.rgb,dtype=np.uint8), (img.height, img.width, -1))
 images.append(rgb_array)
 

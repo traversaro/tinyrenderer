@@ -88,9 +88,9 @@ class TGAImage {
   bool set(int x, int y, const TGAColor &c);
   ~TGAImage();
   TGAImage &operator=(const TGAImage &img);
-  int get_width();
-  int get_height();
-  int get_bytespp();
+  int get_width() const;
+  int get_height() const;
+  int get_bytespp() const;
   unsigned char *buffer();
   void clear();
 };

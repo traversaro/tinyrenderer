@@ -50,10 +50,10 @@ public:
 	}
 	int nfaces();
 	
-	Vec3f normal(int iface, int nthvert);
-	Vec3f normal(Vec2f uv);
-	Vec3f vert(int i);
-	Vec3f vert(int iface, int nthvert);
+	Vec3f normal(int iface, int nthvert) const;
+	Vec3f normal(Vec2f uv) const;
+	Vec3f vert(int i) const;
+	Vec3f vert(int iface, int nthvert) const;
 	Vec3f* readWriteVertices() 
 	{
 		if (verts_.empty())
@@ -69,10 +69,10 @@ public:
 	}
 	
 
-	Vec2f uv(int iface, int nthvert);
-	TGAColor diffuse(Vec2f uv);
-	float specular(Vec2f uv);
-	std::vector<int> face(int idx);
+	Vec2f uv(int iface, int nthvert) const;
+	TGAColor diffuse(Vec2f uv) const;
+	float specular(Vec2f uv) const;
+	std::vector<int> face(int idx) const;
 };
 }
 
