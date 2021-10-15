@@ -932,9 +932,11 @@ int TinySceneRenderer::create_capsule(float radius, float half_height,
   int numVertices = sizeof(textured_sphere_vertices) / strideInBytes;
   int numIndices = sizeof(textured_sphere_indices) / sizeof(int);
 
-  std::array<std::array<int, 3>, 3> index_order = {std::array<int, 3>{1, 0, 2},
+  std::array<std::array<int, 3>, 3> index_order = {std::array<int, 3>{1, 2, 0},
                                                    std::array<int, 3>{0, 1, 2},
-                                                   std::array<int, 3>{0, 2, 1}};
+                                                   std::array<int, 3>{2, 0, 1}};
+
+
 
   std::array<int, 3> shuffled = index_order[up_axis];
 
