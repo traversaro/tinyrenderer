@@ -958,29 +958,26 @@ int TinySceneRenderer::create_capsule(float radius, float half_height,
       transformedVertices[i * 9 + 1] = trVert[1];
       transformedVertices[i * 9 + 2] = trVert[2];
       transformedVertices[i * 9 + 3] = textured_sphere_vertices[i * 9 + 3];
-      transformedVertices[i * 9 + 4] = textured_sphere_vertices[i * 9 + 4];
-      transformedVertices[i * 9 + 5] = textured_sphere_vertices[i * 9 + 5];
-      transformedVertices[i * 9 + 6] = textured_sphere_vertices[i * 9 + 6];
+      transformedVertices[i * 9 + 4] = textured_sphere_vertices[i * 9 + 4+shuffled[0]];
+      transformedVertices[i * 9 + 5] = textured_sphere_vertices[i * 9 + 4+shuffled[1]];
+      transformedVertices[i * 9 + 6] = textured_sphere_vertices[i * 9 + 4+shuffled[2]];
       transformedVertices[i * 9 + 7] = textured_sphere_vertices[i * 9 + 7];
       transformedVertices[i * 9 + 8] = textured_sphere_vertices[i * 9 + 8];
     }
   }
 
   for (int i = 0; i < numVertices; i++) {
-    model->addVertex(
-        transformedVertices[i * 9], transformedVertices[i * 9 + 1],
-        transformedVertices[i * 9 + 2], transformedVertices[i * 9 + 4],
-        transformedVertices[i * 9 + 5], transformedVertices[i * 9 + 6],
+    model->addVertex(transformedVertices[i * 9], transformedVertices[i * 9 + 1],
+        transformedVertices[i * 9 + 2], 
+        transformedVertices[i * 9 + 4],        transformedVertices[i * 9 + 5], transformedVertices[i * 9 + 6],
         transformedVertices[i * 9 + 7], transformedVertices[i * 9 + 8]);
   }
 
   for (int i = 0; i < numIndices; i += 3) {
     model->addTriangle(
-        textured_sphere_indices[i], textured_sphere_indices[i],
-        textured_sphere_indices[i], textured_sphere_indices[i + 1],
-        textured_sphere_indices[i + 1], textured_sphere_indices[i + 1],
-        textured_sphere_indices[i + 2], textured_sphere_indices[i + 2],
-        textured_sphere_indices[i + 2]);
+        textured_sphere_indices[i], textured_sphere_indices[i],textured_sphere_indices[i], 
+        textured_sphere_indices[i + 1],textured_sphere_indices[i + 1], textured_sphere_indices[i + 1],
+        textured_sphere_indices[i + 2], textured_sphere_indices[i + 2],textured_sphere_indices[i + 2]);
   }
   m_models[uid] = model;
   return uid;
@@ -1081,7 +1078,7 @@ int TinySceneRenderer::create_object_instance(int mesh_uid) {
 
   TinyRenderObjectInstance* tinyObj = new TinyRenderObjectInstance();
   tinyObj->m_mesh_uid = mesh_uid;
-  tinyObj->m_doubleSided = true;
+  tinyObj->m_doubleSided = false;
 
   int uid = m_guid++;
   tinyObj->m_object_segmentation_uid = uid;
