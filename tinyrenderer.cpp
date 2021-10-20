@@ -16,7 +16,7 @@
 using namespace TinyRender2;
 
 
-struct DepthShader : public IShader {
+struct DepthShader2 : public IShader {
   const Model* m_model;
   const Matrix& m_modelMat;
   Matrix m_invModelMat;
@@ -33,7 +33,7 @@ struct DepthShader : public IShader {
 
   mat<3, 3, float> varying_nrm;  // normal per vertex to be interpolated by FS
 
-  DepthShader(const Model* model, const Matrix& lightModelView,
+  DepthShader2(const Model* model, const Matrix& lightModelView,
               const Matrix& projectionMat, const Matrix& modelMat,
               Vec3f localScaling, float lightDistance)
       : m_model(model),
@@ -69,7 +69,7 @@ struct DepthShader : public IShader {
   }
 };
 
-struct Shader : public IShader {
+struct Shader2 : public IShader {
   Model* m_model;
   Vec3f m_light_dir_local;
   Vec3f m_light_color;
@@ -103,7 +103,7 @@ struct Shader : public IShader {
   mat<4, 3, float> world_tri;  // model triangle coordinates in the world space
                                // used for backface culling, written by VS
 
-  Shader(Model* model, Vec3f light_dir_local, Vec3f light_color,
+  Shader2(Model* model, Vec3f light_dir_local, Vec3f light_color,
          Matrix& modelView, Matrix& lightModelView, const Matrix& projectionMat,
          const Matrix& modelMat, const Matrix& viewportMat, Vec3f localScaling,
          const Vec4f& colorRGBA, int width, int height,
@@ -382,7 +382,7 @@ void TinySceneRenderer::renderObject(
     TinyRender2::Vec3f P(viewMatrixInv[0][3], viewMatrixInv[1][3],
                         viewMatrixInv[2][3]);
 
-    Shader shader(
+    Shader2 shader(
         model, light.m_dirWorld, light.m_color, modelViewMatrix,
         lightModelViewMatrix, camera.m_projectionMatrix,
         object_instance.m_modelMatrix, camera.m_viewportMatrix, localScaling,
@@ -502,7 +502,7 @@ void TinySceneRenderer::renderObjectDepth(
                        object_instance.m_localScaling[1],
                        object_instance.m_localScaling[2]);
 
-    DepthShader shader(model, lightModelViewMatrix, lightViewProjectionMatrix,
+    DepthShader2 shader(model, lightModelViewMatrix, lightViewProjectionMatrix,
                        object_instance.m_modelMatrix, localScaling,
                        light_distance);
     for (int i = 0; i < model->nfaces(); i++) {
