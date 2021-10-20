@@ -120,7 +120,7 @@ pytinyrenderer_sources = ["python/pytinyrenderer.cc",\
 
 if _platform == "linux" or _platform == "linux2":
     print("linux")
-    libraries = ['dl', 'pthread', 'stdc++fs']
+    libraries = ['dl', 'pthread' ]
     CXX_FLAGS += '-D_LINUX '
     CXX_FLAGS += '-DGLEW_STATIC '
     CXX_FLAGS += '-DGLEW_INIT_OPENGL11_FUNCTIONS=1 '
@@ -131,7 +131,7 @@ if _platform == "linux" or _platform == "linux2":
     CXX_FLAGS += '-fno-inline-functions-called-once '
     CXX_FLAGS += '-fvisibility=hidden '
     CXX_FLAGS += '-fvisibility-inlines-hidden '
-    CXX_FLAGS += '-std=c++1z '
+    CXX_FLAGS += '-std=c++1y '
     CXX_FLAGS += '-Wno-sign-compare '
     CXX_FLAGS += '-Wno-reorder '
     CXX_FLAGS += '-Wno-unused-local-typedefs '
@@ -145,7 +145,7 @@ elif _platform == "win32":
     libraries = ['User32', 'kernel32']
     CXX_FLAGS += '-DWIN32 '
     CXX_FLAGS += '-DGLEW_STATIC '
-    CXX_FLAGS += '/std:c++17 '
+    CXX_FLAGS += '/std:c++1y '
     
     
     
