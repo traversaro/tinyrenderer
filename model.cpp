@@ -6,7 +6,7 @@
 #include <iostream>
 #include <sstream>
 
-namespace TinyRender
+namespace TinyRender2
 {
 Model::Model(const char *filename) : verts_(), faces_(), norms_(), uv_(), diffusemap_(), normalmap_(), specularmap_()
 {
@@ -76,9 +76,9 @@ Model::Model() : verts_(), faces_(), norms_(), uv_(), diffusemap_(), normalmap_(
 void Model::setDiffuseTextureFromData(const unsigned char *textureImage, int textureWidth, int textureHeight)
 {
 	{
-		diffusemap_ = TGAImage(textureWidth, textureHeight, TGAImage::RGB);
+		diffusemap_ = TGAImage2(textureWidth, textureHeight, TGAImage2::RGB);
 	}
-	TGAColor color;
+	TGAColor2 color;
 	color.bgra[3] = 255;
 
 	color.bytespp = 3;
@@ -152,7 +152,7 @@ Vec3f Model::vert(int iface, int nthvert) const
 	return verts_[faces_[iface][nthvert][0]];
 }
 
-void Model::load_texture(std::string filename, const char *suffix, TGAImage &img)
+void Model::load_texture(std::string filename, const char *suffix, TGAImage2 &img)
 {
 	std::string texfile(filename);
 	size_t dot = texfile.find_last_of('.');
@@ -164,7 +164,7 @@ void Model::load_texture(std::string filename, const char *suffix, TGAImage &img
 	}
 }
 
-TGAColor Model::diffuse(Vec2f uvf) const
+TGAColor2 Model::diffuse(Vec2f uvf) const
 {
 	if (diffusemap_.get_width() && diffusemap_.get_height())
 	{
@@ -186,14 +186,14 @@ TGAColor Model::diffuse(Vec2f uvf) const
         	Vec2i uv(uvf[0] * diffusemap_.get_width(), uvf[1] * diffusemap_.get_height());
 		return diffusemap_.get(uv[0], uv[1]);
 	}
-	return TGAColor(255, 255, 255, 255);
+	return TGAColor2(255, 255, 255, 255);
 }
 	
 
 Vec3f Model::normal(Vec2f uvf) const
 {
 	Vec2i uv(uvf[0] * normalmap_.get_width(), uvf[1] * normalmap_.get_height());
-	TGAColor c = normalmap_.get(uv[0], uv[1]);
+	TGAColor2 c = normalmap_.get(uv[0], uv[1]);
 	Vec3f res;
 	for (int i = 0; i < 3; i++)
 		res[2 - i] = (float)c[i] / 255.f * 2.f - 1.f;

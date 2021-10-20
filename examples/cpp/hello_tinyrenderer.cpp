@@ -9,7 +9,7 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-using namespace TinyRender;
+using namespace TinyRender2;
 
 
 
@@ -107,7 +107,7 @@ int main(int argc, char** argv) {
     RenderBuffers buffers(view_width, view_height);
     scene.get_camera_image(instances, light, camera, buffers);
 
-    TGAImage img(view_width, view_height, 3);
+    TGAImage2 img(view_width, view_height, 3);
     for (int w=0;w<view_width;w++)
     {
         for (int h=0;h<view_height;h++)
@@ -115,7 +115,7 @@ int main(int argc, char** argv) {
             unsigned char red = buffers.rgb[3*(w+buffers.m_width*h)+0];
             unsigned char green = buffers.rgb[3*(w+buffers.m_width*h)+1];
             unsigned char blue = buffers.rgb[3*(w+buffers.m_width*h)+2];
-            TGAColor rgb(red,green,blue);
+            TGAColor2 rgb(red,green,blue);
             img.set(w,h,rgb);
         }
     }

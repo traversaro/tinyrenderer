@@ -5,7 +5,7 @@
 #include <cassert>
 #include <cmath>
 
-namespace TinyRender {
+namespace TinyRender2 {
 template <size_t DimCols, size_t DimRows, typename T>
 class mat;
 

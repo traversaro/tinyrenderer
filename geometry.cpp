@@ -1,6 +1,6 @@
 #include "geometry.h"
 
-namespace TinyRender {
+namespace TinyRender2 {
 template <>
 template <>
 vec<3, int>::vec(const vec<3, float> &v)

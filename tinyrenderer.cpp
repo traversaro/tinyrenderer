@@ -13,7 +13,7 @@
 #include "tgaimage.h"
 #include "tinyshapedata.h"
 
-using namespace TinyRender;
+using namespace TinyRender2;
 
 
 struct DepthShader : public IShader {
@@ -62,9 +62,9 @@ struct DepthShader : public IShader {
     return gl_Vertex;
   }
 
-  virtual bool fragment(Vec3f bar, TGAColor& color) {
+  virtual bool fragment(Vec3f bar, TGAColor2& color) {
     Vec4f p = varying_tri * bar;
-    color = TGAColor(255, 255, 255) * (p[2] / m_lightDistance);
+    color = TGAColor2(255, 255, 255) * (p[2] / m_lightDistance);
     return false;
   }
 };
@@ -157,7 +157,7 @@ struct Shader : public IShader {
     return gl_Vertex;
   }
 
-  virtual bool fragment(Vec3f bar, TGAColor& color) {
+  virtual bool fragment(Vec3f bar, TGAColor2& color) {
     Vec4f p = m_viewportMat * (varying_tri_light_view * bar);
     float depth = p[2];
     p = p / p[3];
@@ -222,8 +222,8 @@ TinyRenderCamera::TinyRenderCamera(int viewWidth, int viewHeight, float near,
       TinySceneRenderer::compute_projection_matrix(hfov, vfov, near, far);
 
   for (int i = 0; i < 4; i++) {
-    TinyRender::Vec4f p;
-    TinyRender::Vec4f v;
+    TinyRender2::Vec4f p;
+    TinyRender2::Vec4f v;
     for (int j = 0; j < 4; j++) {
       p[j] = projectionMatrix[i * 4 + j];
       v[j] = viewMatrix[i * 4 + j];
@@ -239,8 +239,8 @@ TinyRenderCamera::TinyRenderCamera(int viewWidth, int viewHeight,
                                    const std::vector<float>& projectionMatrix)
     : m_viewWidth(viewWidth), m_viewHeight(viewHeight) {
   for (int i = 0; i < 4; i++) {
-    TinyRender::Vec4f p;
-    TinyRender::Vec4f v;
+    TinyRender2::Vec4f p;
+    TinyRender2::Vec4f v;
     for (int j = 0; j < 4; j++) {
       p[j] = projectionMatrix[i * 4 + j];
       v[j] = viewMatrix[i * 4 + j];
@@ -274,7 +274,7 @@ TinyRenderLight::~TinyRenderLight() {}
 
 TinyRenderObjectInstance::TinyRenderObjectInstance()
     : m_mesh_uid(-1), m_object_segmentation_uid(-1), m_doubleSided(false) {
-  m_localScaling = TinyRender::Vec3f(1, 1, 1);
+  m_localScaling = TinyRender2::Vec3f(1, 1, 1);
   m_modelMatrix = Matrix::identity();
 }
 
@@ -379,7 +379,7 @@ void TinySceneRenderer::renderObject(
                        object_instance.m_localScaling[1],
                        object_instance.m_localScaling[2]);
     Matrix viewMatrixInv = camera.m_viewMatrix.invert();
-    TinyRender::Vec3f P(viewMatrixInv[0][3], viewMatrixInv[1][3],
+    TinyRender2::Vec3f P(viewMatrixInv[0][3], viewMatrixInv[1][3],
                         viewMatrixInv[2][3]);
 
     Shader shader(
@@ -399,17 +399,17 @@ void TinySceneRenderer::renderObject(
 
         if (!object_instance.m_doubleSided) {
           // backface culling
-          TinyRender::Vec3f v0(shader.world_tri.col(0)[0],
+          TinyRender2::Vec3f v0(shader.world_tri.col(0)[0],
                                shader.world_tri.col(0)[1],
                                shader.world_tri.col(0)[2]);
-          TinyRender::Vec3f v1(shader.world_tri.col(1)[0],
+          TinyRender2::Vec3f v1(shader.world_tri.col(1)[0],
                                shader.world_tri.col(1)[1],
                                shader.world_tri.col(1)[2]);
-          TinyRender::Vec3f v2(shader.world_tri.col(2)[0],
+          TinyRender2::Vec3f v2(shader.world_tri.col(2)[0],
                                shader.world_tri.col(2)[1],
                                shader.world_tri.col(2)[2]);
-          TinyRender::Vec3f N = TinyRender::cross((v1 - v0), (v2 - v0));
-          if (TinyRender::dot((v0 - P), (N)) >= 0) continue;
+          TinyRender2::Vec3f N = TinyRender2::cross((v1 - v0), (v2 - v0));
+          if (TinyRender2::dot((v0 - P), (N)) >= 0) continue;
         }
 
         std::vector<mat<4, 3, float> > clippedTriangles;
@@ -485,7 +485,7 @@ void TinySceneRenderer::renderObjectDepth(
                                : 0;
   int* segmentationMaskBufferPtr = 0;
 
-  TGAImage depthFrame(width, height, TGAImage::RGB);
+  TGAImage2 depthFrame(width, height, TGAImage2::RGB);
 
   {
     // light target is set to be the origin, and the up direction is set to be
@@ -565,9 +565,9 @@ std::vector<float> TinySceneRenderer::compute_view_matrix(
   viewMatrix[1 * 4 + 3] = 0.f;
   viewMatrix[2 * 4 + 3] = 0.f;
 
-  viewMatrix[3 * 4 + 0] = -TinyRender::dot(s, eye);
-  viewMatrix[3 * 4 + 1] = -TinyRender::dot(u, eye);
-  viewMatrix[3 * 4 + 2] = TinyRender::dot(f, eye);
+  viewMatrix[3 * 4 + 0] = -TinyRender2::dot(s, eye);
+  viewMatrix[3 * 4 + 1] = -TinyRender2::dot(u, eye);
+  viewMatrix[3 * 4 + 2] = TinyRender2::dot(f, eye);
   viewMatrix[3 * 4 + 3] = 1.f;
   return viewMatrix;
 }
@@ -840,7 +840,7 @@ int TinySceneRenderer::create_mesh(const std::vector<double>& vertices,
                                    int texture_width, int texture_height,
                                    float texture_scaling) {
   int uid = m_guid++;
-  TinyRender::Model* model = new TinyRender::Model();
+  TinyRender2::Model* model = new TinyRender2::Model();
 
   if (!texture.empty() &&
       texture.size() == texture_width * texture_height * 3) {
@@ -873,7 +873,7 @@ int TinySceneRenderer::create_cube(const std::vector<double>& half_extents,
                                    int texture_width, int texture_height,
                                    float texture_scaling) {
   int uid = m_guid++;
-  TinyRender::Model* model = new TinyRender::Model();
+  TinyRender2::Model* model = new TinyRender2::Model();
 
   if (!texture.empty() &&
       texture.size() == texture_width * texture_height * 3) {
@@ -916,7 +916,7 @@ int TinySceneRenderer::create_capsule(float radius, float half_height,
                                       const std::vector<unsigned char>& texture,
                                       int texture_width, int texture_height) {
   int uid = m_guid++;
-  TinyRender::Model* model = new TinyRender::Model();
+  TinyRender2::Model* model = new TinyRender2::Model();
 
   if (!texture.empty() &&
       texture.size() == texture_width * texture_height * 3) {
@@ -1075,7 +1075,7 @@ void TinySceneRenderer::set_object_local_scaling(
 }
 
 int TinySceneRenderer::create_object_instance(int mesh_uid) {
-  TinyRender::Model* model = this->m_models[mesh_uid];
+  TinyRender2::Model* model = this->m_models[mesh_uid];
   if (model == 0) return -1;
 
   TinyRenderObjectInstance* tinyObj = new TinyRenderObjectInstance();

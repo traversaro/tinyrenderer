@@ -5,7 +5,7 @@
 #include <cstdlib>
 #include <limits>
 
-namespace TinyRender {
+namespace TinyRender2 {
 IShader::~IShader() {}
 
 Matrix viewport(int x, int y, int w, int h) {
@@ -124,7 +124,7 @@ void triangleClipped(mat<4, 3, float> &clipc, mat<4, 3, float> &orgClipc,
   }
 
   Vec2i P;
-  TGAColor color;
+  TGAColor2 color;
 
   mat<3, 4, float> orgScreenSpacePts =
       (viewPortMatrix * orgClipc)
@@ -221,7 +221,7 @@ void triangle(mat<4, 3, float> &clipc, IShader &shader,
   }
 
   Vec2i P;
-  TGAColor color;
+  TGAColor2 color;
   for (P.x = bboxmin.x; P.x <= bboxmax.x; P.x++) {
     for (P.y = bboxmin.y; P.y <= bboxmax.y; P.y++) {
       int y_inverted = create_shadow_map ? P.y : (render_buffers.m_height - 1 - P.y);

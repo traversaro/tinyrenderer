@@ -4,7 +4,7 @@
 #include "renderbuffers.h"
 #include "tgaimage.h"
 
-namespace TinyRender {
+namespace TinyRender2 {
 Matrix viewport(int x, int y, int w, int h);
 Matrix projection(float coeff = 0.f);  // coeff = -1/c
 Matrix lookat(Vec3f eye, Vec3f center, Vec3f up);
@@ -15,7 +15,7 @@ struct IShader {
   IShader() : m_nearPlane(0.01), m_farPlane(1000.) {}
   virtual ~IShader();
   virtual Vec4f vertex(int iface, int nthvert) = 0;
-  virtual bool fragment(Vec3f bar, TGAColor &color) = 0;
+  virtual bool fragment(Vec3f bar, TGAColor2 &color) = 0;
 };
 
 void triangle(mat<4, 3, float> &clipc, IShader &shader,

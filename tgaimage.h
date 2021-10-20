@@ -4,7 +4,7 @@
 #include <fstream>
 
 #pragma pack(push, 1)
-struct TGA_Header {
+struct TGA_Header2 {
   char idlength;
   char colormaptype;
   char datatypecode;
@@ -20,15 +20,15 @@ struct TGA_Header {
 };
 #pragma pack(pop)
 
-struct TGAColor {
+struct TGAColor2 {
   unsigned char bgra[4];
   unsigned char bytespp;
 
-  TGAColor() : bytespp(1) {
+  TGAColor2() : bytespp(1) {
     for (int i = 0; i < 4; i++) bgra[i] = 0;
   }
 
-  TGAColor(unsigned char R, unsigned char G, unsigned char B,
+  TGAColor2(unsigned char R, unsigned char G, unsigned char B,
            unsigned char A = 255)
       : bytespp(4) {
     bgra[0] = B;
@@ -37,12 +37,12 @@ struct TGAColor {
     bgra[3] = A;
   }
 
-  TGAColor(unsigned char v) : bytespp(1) {
+  TGAColor2(unsigned char v) : bytespp(1) {
     for (int i = 0; i < 4; i++) bgra[i] = 0;
     bgra[0] = v;
   }
 
-  TGAColor(const unsigned char *p, unsigned char bpp) : bytespp(bpp) {
+  TGAColor2(const unsigned char *p, unsigned char bpp) : bytespp(bpp) {
     for (int i = 0; i < (int)bpp; i++) {
       bgra[i] = p[i];
     }
@@ -53,15 +53,15 @@ struct TGAColor {
 
   unsigned char &operator[](const int i) { return bgra[i]; }
 
-  TGAColor operator*(float intensity) const {
-    TGAColor res = *this;
+  TGAColor2 operator*(float intensity) const {
+    TGAColor2 res = *this;
     intensity = (intensity > 1.f ? 1.f : (intensity < 0.f ? 0.f : intensity));
     for (int i = 0; i < 4; i++) res.bgra[i] = bgra[i] * intensity;
     return res;
   }
 };
 
-class TGAImage {
+class TGAImage2 {
  protected:
   unsigned char *data;
   int width;
@@ -74,20 +74,20 @@ class TGAImage {
  public:
   enum Format { GRAYSCALE = 1, RGB = 3, RGBA = 4 };
 
-  TGAImage();
-  TGAImage(int w, int h, int bpp);
-  TGAImage(const TGAImage &img);
+  TGAImage2();
+  TGAImage2(int w, int h, int bpp);
+  TGAImage2(const TGAImage2 &img);
   bool read_tga_file(const char *filename);
   bool write_tga_file(const char *filename, bool rle = true) const;
   bool flip_horizontally();
   bool flip_vertically();
   bool scale(int w, int h);
-  TGAColor get(int x, int y) const;
+  TGAColor2 get(int x, int y) const;
 
-  bool set(int x, int y, TGAColor &c);
-  bool set(int x, int y, const TGAColor &c);
-  ~TGAImage();
-  TGAImage &operator=(const TGAImage &img);
+  bool set(int x, int y, TGAColor2 &c);
+  bool set(int x, int y, const TGAColor2 &c);
+  ~TGAImage2();
+  TGAImage2 &operator=(const TGAImage2 &img);
   int get_width() const;
   int get_height() const;
   int get_bytespp() const;

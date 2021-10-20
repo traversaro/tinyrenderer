@@ -27,7 +27,7 @@ std::string file_open_dialog(const std::string& path) {
   return std::string("opening: ") + path;
 }
 
-using namespace TinyRender;
+using namespace TinyRender2;
 
 namespace py = pybind11;
 

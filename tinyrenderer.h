@@ -9,10 +9,11 @@
 #include "renderbuffers.h"
 #include "tgaimage.h"
 
+namespace TinyRender2 {
 struct TinyRenderCamera {
-  TinyRender::Matrix m_viewMatrix;
-  TinyRender::Matrix m_projectionMatrix;
-  TinyRender::Matrix m_viewportMatrix;
+  TinyRender2::Matrix m_viewMatrix;
+  TinyRender2::Matrix m_projectionMatrix;
+  TinyRender2::Matrix m_viewportMatrix;
   int m_viewWidth;
   int m_viewHeight;
 
@@ -30,9 +31,9 @@ struct TinyRenderCamera {
 };
 
 struct TinyRenderLight {
-  TinyRender::Vec3f m_dirWorld;
-  TinyRender::Vec3f m_color;
-  TinyRender::Vec3f m_shadowmap_center;
+  TinyRender2::Vec3f m_dirWorld;
+  TinyRender2::Vec3f m_color;
+  TinyRender2::Vec3f m_shadowmap_center;
   float m_distance;
   float m_ambientCoeff;
   float m_diffuseCoeff;
@@ -53,8 +54,8 @@ struct TinyRenderLight {
 
 struct TinyRenderObjectInstance {
   int m_mesh_uid;
-  TinyRender::Vec3f m_localScaling;
-  TinyRender::Matrix m_modelMatrix;
+  TinyRender2::Vec3f m_localScaling;
+  TinyRender2::Matrix m_modelMatrix;
   int m_object_segmentation_uid;
   bool m_doubleSided;
 
@@ -70,8 +71,8 @@ struct TinyRenderObjectInstance {
                          unsigned char* textureImage = 0, int textureWidth = 0,
                          int textureHeight = 0);
 
-  void registerMesh2(std::vector<TinyRender::Vec3f>& vertices,
-                     std::vector<TinyRender::Vec3f>& normals,
+  void registerMesh2(std::vector<TinyRender2::Vec3f>& vertices,
+                     std::vector<TinyRender2::Vec3f>& normals,
                      std::vector<int>& indices,
                      struct CommonFileIOInterface* fileIO);
 };
@@ -79,7 +80,7 @@ struct TinyRenderObjectInstance {
 class TinySceneRenderer {
   int m_guid;
 
-  std::map<int, TinyRender::Model*> m_models;
+  std::map<int, TinyRender2::Model*> m_models;
   std::map<int, TinyRenderObjectInstance*> m_object_instances;
 
  public:
@@ -164,12 +165,13 @@ class TinySceneRenderer {
   static std::vector<float> compute_projection_matrix2(float left, float right, float bottom, float top, float nearVal, float farVal);
   static std::vector<float> compute_projection_matrix_fov(float fov, float aspect, float nearVal, float farVal);
 
-  static TinyRender::Vec3f quatRotate(const TinyRender::Vec4f& rotation, const TinyRender::Vec3f& v);
-  static TinyRender::Vec4f inverse(const TinyRender::Vec4f& rotation);
-  static void setEulerZYX(	const float& yawZ, const float& pitchY, const float& rollX, TinyRender::Vec4f& euler);
-  static TinyRender::Vec4f quatMul3(const TinyRender::Vec4f& q, const TinyRender::Vec3f& w);
-  static TinyRender::Vec4f quatMul4(const TinyRender::Vec4f& q, const TinyRender::Vec4f& w);
+  static TinyRender2::Vec3f quatRotate(const TinyRender2::Vec4f& rotation, const TinyRender2::Vec3f& v);
+  static TinyRender2::Vec4f inverse(const TinyRender2::Vec4f& rotation);
+  static void setEulerZYX(	const float& yawZ, const float& pitchY, const float& rollX, TinyRender2::Vec4f& euler);
+  static TinyRender2::Vec4f quatMul3(const TinyRender2::Vec4f& q, const TinyRender2::Vec3f& w);
+  static TinyRender2::Vec4f quatMul4(const TinyRender2::Vec4f& q, const TinyRender2::Vec4f& w);
 
+};
 };
 
 #endif  // TDS_TINY_RENDERER_H
