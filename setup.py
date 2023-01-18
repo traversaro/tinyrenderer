@@ -90,7 +90,7 @@ CXX_FLAGS += '-D_USE_MATH_DEFINES '
 # libraries += [current_python]
 
 libraries = []
-include_dirs = ['.','python', 'third_party/pybind11/include']
+include_dirs = ['.','python']
 
 
 try:

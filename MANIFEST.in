@@ -2,7 +2,6 @@ include MANIFEST.in *.txt *.h
 recursive-include examples *.h
 recursive-include examples *.cpp
 recursive-include python *.*
-recursive-include third_party/pybind11 *.*
 include .
 geometry.h
 model.h
